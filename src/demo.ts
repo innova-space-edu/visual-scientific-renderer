@@ -7,7 +7,7 @@ function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;handle.render
 async function wrappedObject(object:any){const THREE=handle.THREE,scene=new THREE.Scene();scene.background=new THREE.Color(0x01040a);scene.add(object);scene.add(new THREE.DirectionalLight(0xffffff,4));scene.add(new THREE.DirectionalLight(0x60a5fa,1.4));scene.add(new THREE.AmbientLight(0x334466,.8));return{scene,root:object}}
 async function loadScene(name:string){
   currentScene=name;document.querySelectorAll("[data-scene]").forEach(b=>b.classList.toggle("active",(b as HTMLElement).dataset.scene===name));
-  if(name==="solar"){current=await buildAdvancedSolarSystemScene({particleCount:+particles.value,seed:42});camera.position.set(0,5.8,8.6);camera.lookAt(2.5,0,0)}
+  if(name==="solar"||name==="solar-date"){current=await buildAdvancedSolarSystemScene({particleCount:+particles.value,seed:42,layout:name==="solar-date"?"ephemeris":"educational",ephemerisDate:new Date()});camera.position.set(0,7.4,10.5);camera.lookAt(2.5,0,0)}
   else if(name==="sun"||name==="saturn"){current=await buildSingleBodyScene(name as"sun"|"saturn",{particleCount:+particles.value,seed:42});camera.position.set(0,.4,5.5);camera.lookAt(0,0,0)}
   else if(name==="h2o"){current=await wrappedObject(await buildMoleculeObject(MOLECULES.H2O,1));camera.position.set(0,0,5);camera.lookAt(0,0,0)}
   else if(name==="cell"){current=await wrappedObject(await buildCellObject(defaultAnimalCell()));camera.position.set(0,0,6.5);camera.lookAt(0,0,0)}
