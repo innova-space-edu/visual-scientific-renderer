@@ -15,7 +15,7 @@ function hitAABB(ray:Ray,b:AABB,tMax=Infinity){
     const tb=(b.max[axis]!-ray.origin[axis]!)*inv;
     t0=Math.max(t0,Math.min(ta,tb));
     t1=Math.min(t1,Math.max(ta,tb));
-    if(t1<=t0)return false;
+    if(t1<t0)return false;
   }
   return true;
 }
