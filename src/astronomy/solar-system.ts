@@ -1,4 +1,4 @@
-import {createProceduralMaterial} from "../materials/procedural.js";import {ParticleSystem} from "../particles/webgpu.js";import {makeGlowShell} from "../postfx/postfx.js";import {createAtmosphereShell,createSolarProminenceArcs} from "./planet-effects.js";
+import {createProceduralMaterial} from "../materials/procedural.js";import {ParticleSystem} from "../particles/webgpu.js";import {makeGlowShell} from "../postfx/postfx.js";import {createAtmosphereShell,createSolarProminenceArcs} from "./planet-effects.js";import {approximateSolarSystem,JPL_APPROX_1800_2050} from "./local-ephemeris.js";
 export type SolarBodySpec={id:string;radius:number;distance:number;material:"sun"|"rocky"|"gas-giant"|"ice-giant";a:string;b:string;ring?:{inner:number;outer:number;opacity:number};tilt?:number;storm?:boolean};
 export const SOLAR_SYSTEM:SolarBodySpec[]=[
 {id:"sun",radius:.72,distance:0,material:"sun",a:"#ff6b00",b:"#fff0a8"},
@@ -15,20 +15,26 @@ function starfield(THREE:any,count=2400,seed=42){
   const pos=new Float32Array(count*3);for(let i=0;i<count;i++){const r=18+rnd()*30,theta=rnd()*Math.PI*2,phi=Math.acos(2*rnd()-1),o=i*3;pos[o]=r*Math.sin(phi)*Math.cos(theta);pos[o+1]=r*Math.cos(phi);pos[o+2]=r*Math.sin(phi)*Math.sin(theta)}
   const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.BufferAttribute(pos,3));return new THREE.Points(geo,new THREE.PointsMaterial({color:0xbfd8ff,size:.035,transparent:true,opacity:.8,depthWrite:false}));
 }
-export async function buildAdvancedSolarSystemScene(options:{scale?:number;particleCount?:number;seed?:number}={}){
+export async function buildAdvancedSolarSystemScene(options:{scale?:number;particleCount?:number;seed?:number;ephemerisDate?:Date|string;layout?:"educational"|"ephemeris"}={}){
   const THREE:any=await import("three/webgpu"),scene=new THREE.Scene();scene.background=new THREE.Color(0x01040a);scene.add(starfield(THREE,2600,options.seed??42));
-  const root=new THREE.Group();scene.add(root);const objects=new Map<string,any>(),scale=options.scale??1,seed=options.seed??42;
+  const root=new THREE.Group();scene.add(root);const objects=new Map<string,any>(),scale=options.scale??1,seed=options.seed??42,layout=options.layout??"educational",date=options.ephemerisDate?new Date(options.ephemerisDate):new Date(),ephemeris=layout==="ephemeris"?approximateSolarSystem(date):null,compress=(au:number)=>Math.log1p(Math.max(0,au))*1.62*scale;
   for(let index=0;index<SOLAR_SYSTEM.length;index++){
     const body=SOLAR_SYSTEM[index]!,geometry=new THREE.SphereGeometry(body.radius*scale,96,64),material=await createProceduralMaterial(body.material,{seed:seed+index*13,colorA:body.a,colorB:body.b,bands:body.material==="gas-giant"?30:12,turbulence:body.id==="sun"?10:5,emissive:3.2,size:512,storm:body.storm,stormColor:"#a73018"}),mesh=new THREE.Mesh(geometry,material);
-    mesh.position.x=body.distance*scale;if(body.tilt)mesh.rotation.z=THREE.MathUtils.degToRad(body.tilt);root.add(mesh);objects.set(body.id,mesh);if(body.id==="earth")mesh.add(await createAtmosphereShell(body.radius*scale,{color:0x5eb8ff,opacity:.12,scale:1.09}));if(body.id==="jupiter")mesh.add(await createAtmosphereShell(body.radius*scale,{color:0xd6b48b,opacity:.035,scale:1.025,additive:false}));
-    const orbit=new THREE.Mesh(new THREE.RingGeometry(Math.max(.001,body.distance*scale-.003),body.distance*scale+.003,256),new THREE.MeshBasicNodeMaterial({color:0x263449,transparent:true,opacity:body.id==="sun"?0:.33,side:THREE.DoubleSide}));orbit.rotation.x=Math.PI/2;root.add(orbit);
+    if(layout==="ephemeris"&&body.id!=="sun"){
+      const p:any=ephemeris?.[body.id];
+      if(p){const planar=Math.max(1e-9,Math.hypot(p.x,p.y)),r=compress(p.distanceAU),vertical=Math.atan2(p.z,planar);mesh.position.set(r*p.x/planar,Math.sin(vertical)*r,r*p.y/planar);}
+      else mesh.position.x=body.distance*scale;
+    }else mesh.position.x=body.distance*scale;
+    if(body.tilt)mesh.rotation.z=THREE.MathUtils.degToRad(body.tilt);root.add(mesh);objects.set(body.id,mesh);if(body.id==="earth")mesh.add(await createAtmosphereShell(body.radius*scale,{color:0x5eb8ff,opacity:.12,scale:1.09}));if(body.id==="jupiter")mesh.add(await createAtmosphereShell(body.radius*scale,{color:0xd6b48b,opacity:.035,scale:1.025,additive:false}));
+    const orbitRadius=layout==="ephemeris"&&body.id!=="sun"?compress(JPL_APPROX_1800_2050[body.id]?.base.a??body.distance):body.distance*scale;
+    const orbit=new THREE.Mesh(new THREE.RingGeometry(Math.max(.001,orbitRadius-.003),orbitRadius+.003,256),new THREE.MeshBasicNodeMaterial({color:0x263449,transparent:true,opacity:body.id==="sun"?0:.33,side:THREE.DoubleSide}));orbit.rotation.x=Math.PI/2;root.add(orbit);
     if(body.ring){const rg=new THREE.RingGeometry(body.ring.inner*scale,body.ring.outer*scale,256,16),rm=await createProceduralMaterial("rings",{seed:seed+300+index,colorA:"#4e4436",colorB:"#e8d8a9",opacity:body.ring.opacity,size:512}),ring=new THREE.Mesh(rg,rm);ring.rotation.x=Math.PI/2;mesh.add(ring)}
   }
   const sun=objects.get("sun");if(sun){sun.add(new THREE.PointLight(0xfff2d0,90,0,1.4));sun.add(makeGlowShell(THREE,.72*scale,0xff7a00,1.2));sun.add(await createSolarProminenceArcs(.72*scale,14,seed+900))}
   scene.add(new THREE.AmbientLight(0x334466,.35));
   const particleCount=Math.max(1000,options.particleCount??12000),sim=new ParticleSystem({count:particleCount,seed,bounds:1.25*scale,drag:.015,radialForce:.018}),pg=new THREE.BufferGeometry();pg.setAttribute("position",new THREE.BufferAttribute(sim.positions,3));
   const pm=new THREE.PointsMaterial({color:0xff9b40,size:.012*scale,transparent:true,opacity:.48,depthWrite:false,blending:THREE.AdditiveBlending}),points=new THREE.Points(pg,pm);sun?.add(points);
-  return{scene,root,objects,corona:{system:sim,points,geometry:pg}};
+  return{scene,root,objects,corona:{system:sim,points,geometry:pg},ephemeris:layout==="ephemeris"?{date:date.toISOString(),source:"local-jpl-approximation"}:null};
 }
 export async function buildSingleBodyScene(bodyId:"sun"|"saturn",options:{particleCount?:number;seed?:number}={}){
   const THREE:any=await import("three/webgpu"),scene=new THREE.Scene();scene.background=new THREE.Color(0x01040a);scene.add(starfield(THREE,1800,options.seed??42));
