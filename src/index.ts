@@ -55,3 +55,5 @@ export * from "./python/scientific-kernels.js";
 export * from "./skills/scientific-skills.js";
 
 export * from "./export/exr.js";
+
+export * from "./volume/webgpu-volume.js";
