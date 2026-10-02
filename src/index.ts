@@ -19,3 +19,10 @@ export * from "./render/pathtracer.js";
 export * from "./optics/camera.js";
 export * from "./chemistry/molecule.js";
 export * from "./biology/cell.js";
+
+export * from "./image/gpu-filters.js";
+export * from "./physics/atmosphere.js";
+export * from "./export/hdr.js";
+export * from "./plugins/registry.js";
+export * from "./learning/hooks.js";
+export * from "./runtime/benchmark.js";

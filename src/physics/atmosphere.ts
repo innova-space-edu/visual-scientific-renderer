@@ -1,0 +1,6 @@
+export type AtmosphereParams={planetRadius:number;atmosphereRadius:number;rayleigh:[number,number,number];mie:number;scaleHeightRayleigh:number;scaleHeightMie:number;sunIntensity:number};
+export const EARTH_ATMOSPHERE:AtmosphereParams={planetRadius:6371e3,atmosphereRadius:6471e3,rayleigh:[5.8e-6,13.5e-6,33.1e-6],mie:21e-6,scaleHeightRayleigh:8000,scaleHeightMie:1200,sunIntensity:20};
+export function densityAtAltitude(altitude:number,p:AtmosphereParams=EARTH_ATMOSPHERE){return{rayleigh:Math.exp(-Math.max(0,altitude)/p.scaleHeightRayleigh),mie:Math.exp(-Math.max(0,altitude)/p.scaleHeightMie)}}
+export function rayleighPhase(cosTheta:number){return 3/(16*Math.PI)*(1+cosTheta*cosTheta)}
+export function henyeyGreenstein(cosTheta:number,g=.76){return(1-g*g)/(4*Math.PI*Math.pow(1+g*g-2*g*cosTheta,1.5))}
+export function approximateSkyScattering(altitude:number,cosTheta:number,p:AtmosphereParams=EARTH_ATMOSPHERE){const d=densityAtAltitude(altitude,p),r=rayleighPhase(cosTheta),m=henyeyGreenstein(cosTheta);return[p.sunIntensity*(p.rayleigh[0]*d.rayleigh*r+p.mie*d.mie*m),p.sunIntensity*(p.rayleigh[1]*d.rayleigh*r+p.mie*d.mie*m),p.sunIntensity*(p.rayleigh[2]*d.rayleigh*r+p.mie*d.mie*m)] as [number,number,number]}

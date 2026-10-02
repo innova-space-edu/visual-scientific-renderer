@@ -1,0 +1,4 @@
+import type {ScientificRenderRequest} from "../types.js";
+export type ScientificPluginContext={request:ScientificRenderRequest;capabilities?:Record<string,unknown>};
+export type ScientificPlugin={id:string;version:string;domains:string[];canHandle?(ctx:ScientificPluginContext):boolean;prepare?(ctx:ScientificPluginContext):Promise<unknown>|unknown;dispose?():void};
+export class ScientificPluginRegistry{private plugins=new Map<string,ScientificPlugin>();register(plugin:ScientificPlugin){if(this.plugins.has(plugin.id))throw new Error("Plugin already registered: "+plugin.id);this.plugins.set(plugin.id,plugin);return this}unregister(id:string){const p=this.plugins.get(id);p?.dispose?.();return this.plugins.delete(id)}get(id:string){return this.plugins.get(id)}list(domain?:string){return[...this.plugins.values()].filter(p=>!domain||p.domains.includes(domain))}resolve(ctx:ScientificPluginContext){return this.list(ctx.request.domain).filter(p=>p.canHandle?.(ctx)??true)}}
