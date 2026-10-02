@@ -32,3 +32,5 @@ export * from "./astronomy/kernel-store.js";
 export * from "./runtime/orchestrator.js";
 export * from "./physics/plasma-visual.js";
 export * from "./vendor/runtime-manifest.js";
+
+export * from "./astronomy/planet-effects.js";

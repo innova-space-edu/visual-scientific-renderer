@@ -18,7 +18,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "npm run build:lib && node --test test/*.test.mjs",
     "check": "npm run typecheck && npm run test && npm run build",
-    "start:blender-worker": "npm run build:lib && node scripts/start-blender-worker.mjs"
+    "start:blender-worker": "npm run build:lib && node scripts/start-blender-worker.mjs",
+    "vendor:runtime": "node scripts/vendor-runtime.mjs",
+    "check:runtime-assets": "node scripts/check-runtime-assets.mjs"
   },
   "dependencies": {
     "three": "^0.180.0"
