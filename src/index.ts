@@ -40,3 +40,5 @@ export * from "./fields/marching-tetrahedra.js";
 export * from "./astronomy/kernel-updater.js";
 export * from "./render/motion.js";
 export * from "./integration/visual-engine.js";
+
+export * from "./physics/plasma-demo.js";
