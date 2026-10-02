@@ -20,10 +20,12 @@
     "check": "npm run typecheck && npm run test && npm run build",
     "start:blender-worker": "npm run build:lib && node scripts/start-blender-worker.mjs",
     "vendor:runtime": "node scripts/vendor-runtime.mjs",
-    "check:runtime-assets": "node scripts/check-runtime-assets.mjs"
+    "check:runtime-assets": "node scripts/check-runtime-assets.mjs",
+    "postinstall": "node scripts/vendor-runtime.mjs"
   },
   "dependencies": {
-    "three": "^0.180.0"
+    "three": "^0.180.0",
+    "pyodide": "^0.28.3"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
