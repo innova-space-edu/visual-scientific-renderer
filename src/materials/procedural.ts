@@ -11,7 +11,14 @@ export function createProceduralTexture(THREE:any,kind:BodyMaterialKind,options:
     const u=x/size,v=y/size;let t=.5;
     if(kind==="gas-giant"||kind==="ice-giant"){const bands=options.bands??24,wave=Math.sin(v*Math.PI*bands+fbm3(u*3,v*9,0,4,seed)*2.2);t=.5+.34*wave+.16*fbm3(u*8,v*5,1,4,seed+20)}
     else if(kind==="sun"){t=.5+.4*ridgedFbm3(u*12,v*12,0,6,seed)+.15*fbm3(u*35,v*35,2,3,seed+4)}
-    else if(kind==="rings"){t=.5+.35*Math.sin(u*120)+.15*fbm3(u*30,v*2,0,3,seed)}
+    else if(kind==="rings"){
+      const radial=Math.hypot(u-.5,v-.5)*2;
+      const fine=.5+.5*Math.sin(radial*310+fbm3(u*18,v*18,0,3,seed)*3);
+      const broad=.5+.5*Math.sin(radial*54);
+      t=.18+.52*fine+.30*broad;
+      if(radial>.64&&radial<.69)t*=.08;
+      if(radial>.82&&radial<.845)t*=.28;
+    }
     else t=.5+.4*fbm3(u*9,v*9,0,6,seed);
     let c=mix(a,b,t);
     if(options.storm&&kind==="gas-giant"){
@@ -25,10 +32,10 @@ export function createProceduralTexture(THREE:any,kind:BodyMaterialKind,options:
 }
 export async function createProceduralMaterial(kind:BodyMaterialKind,options:MaterialOptions={}){
   const THREE:any=await import("three/webgpu"),TSL:any=await import("three/tsl"),texture=createProceduralTexture(THREE,kind,options),material=new THREE.MeshStandardNodeMaterial();
-  material.map=texture;
+  material.map=texture;if(kind==="rocky"){material.bumpMap=texture;material.bumpScale=.045;}if(kind==="gas-giant"){material.bumpMap=texture;material.bumpScale=.008;}
   if(typeof TSL?.texture==="function"){try{material.colorNode=TSL.texture(texture)}catch{}}
   material.roughness=kind==="sun"?.28:kind==="rings"?.78:.68;material.metalness=0;
   if(kind==="sun"){material.emissive=new THREE.Color(options.colorA??"#ff7900");material.emissiveMap=texture;material.emissiveIntensity=options.emissive??2.7;if(typeof TSL?.texture==="function"){try{material.emissiveNode=TSL.texture(texture).mul(options.emissive??2.7)}catch{}}}
-  if(kind==="rings"||kind==="atmosphere"){material.transparent=true;material.opacity=options.opacity??.62;material.depthWrite=false;material.side=THREE.DoubleSide}
+  if(kind==="rings"||kind==="atmosphere"){material.transparent=true;material.opacity=options.opacity??.62;material.depthWrite=false;if(kind==="rings")material.alphaMap=texture;material.side=THREE.DoubleSide}
   material.userData={procedural:true,kind,seed:options.seed??1,tslAvailable:!!TSL?.texture,storm:!!options.storm};return material;
 }
