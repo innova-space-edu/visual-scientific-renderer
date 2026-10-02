@@ -12,3 +12,10 @@ export * from "./python/local-pyodide.js";
 export * from "./astronomy/spice-local.js";
 export * from "./render/cache.js";
 export * from "./render/queue.js";
+
+export * from "./physics/forces.js";
+export * from "./render/bvh.js";
+export * from "./render/pathtracer.js";
+export * from "./optics/camera.js";
+export * from "./chemistry/molecule.js";
+export * from "./biology/cell.js";
