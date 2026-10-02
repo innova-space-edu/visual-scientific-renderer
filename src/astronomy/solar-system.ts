@@ -1,5 +1,14 @@
 import {createProceduralMaterial} from "../materials/procedural.js";import {ParticleSystem} from "../particles/webgpu.js";import {makeGlowShell} from "../postfx/postfx.js";import {createAtmosphereShell,createSolarProminenceArcs} from "./planet-effects.js";import {approximateSolarSystem,JPL_APPROX_1800_2050} from "./local-ephemeris.js";
 export type SolarBodySpec={id:string;radius:number;distance:number;material:"sun"|"rocky"|"gas-giant"|"ice-giant";a:string;b:string;ring?:{inner:number;outer:number;opacity:number};tilt?:number;storm?:boolean};
+export const SOLAR_MOONS=[
+  {id:"moon",parent:"earth",radius:.034,distance:.22,a:"#73777d",b:"#d4d4d4"},
+  {id:"io",parent:"jupiter",radius:.028,distance:.47,a:"#d8b545",b:"#f2dd83"},
+  {id:"europa",parent:"jupiter",radius:.024,distance:.59,a:"#bba789",b:"#eee1c7"},
+  {id:"ganymede",parent:"jupiter",radius:.038,distance:.73,a:"#76675a",b:"#b7a899"},
+  {id:"callisto",parent:"jupiter",radius:.036,distance:.88,a:"#4b443e",b:"#8d8377"},
+  {id:"titan",parent:"saturn",radius:.034,distance:.57,a:"#c87825",b:"#f0c06f"}
+] as const;
+
 export const SOLAR_SYSTEM:SolarBodySpec[]=[
 {id:"sun",radius:.72,distance:0,material:"sun",a:"#ff6b00",b:"#fff0a8"},
 {id:"mercury",radius:.055,distance:1.25,material:"rocky",a:"#6e6a65",b:"#b8aba0"},
@@ -29,6 +38,14 @@ export async function buildAdvancedSolarSystemScene(options:{scale?:number;parti
     const orbitRadius=layout==="ephemeris"&&body.id!=="sun"?compress(JPL_APPROX_1800_2050[body.id]?.base.a??body.distance):body.distance*scale;
     const orbit=new THREE.Mesh(new THREE.RingGeometry(Math.max(.001,orbitRadius-.003),orbitRadius+.003,256),new THREE.MeshBasicNodeMaterial({color:0x263449,transparent:true,opacity:body.id==="sun"?0:.33,side:THREE.DoubleSide}));orbit.rotation.x=Math.PI/2;root.add(orbit);
     if(body.ring){const rg=new THREE.RingGeometry(body.ring.inner*scale,body.ring.outer*scale,256,16),rm=await createProceduralMaterial("rings",{seed:seed+300+index,colorA:"#4e4436",colorB:"#e8d8a9",opacity:body.ring.opacity,size:512}),ring=new THREE.Mesh(rg,rm);ring.rotation.x=Math.PI/2;mesh.add(ring)}
+  }
+  for(let mi=0;mi<SOLAR_MOONS.length;mi++){
+    const moon=SOLAR_MOONS[mi]!,parent=objects.get(moon.parent);if(!parent)continue;
+    const mm=await createProceduralMaterial("rocky",{seed:seed+1200+mi,colorA:moon.a,colorB:moon.b,size:256});
+    const mesh=new THREE.Mesh(new THREE.SphereGeometry(moon.radius*scale,48,32),mm);
+    const angle=(mi*.91+seed*.013)%(Math.PI*2);
+    mesh.position.set(Math.cos(angle)*moon.distance*scale,Math.sin(angle*.7)*moon.distance*scale*.18,Math.sin(angle)*moon.distance*scale);
+    parent.add(mesh);objects.set(moon.id,mesh);
   }
   const sun=objects.get("sun");if(sun){sun.add(new THREE.PointLight(0xfff2d0,90,0,1.4));sun.add(makeGlowShell(THREE,.72*scale,0xff7a00,1.2));sun.add(await createSolarProminenceArcs(.72*scale,14,seed+900))}
   scene.add(new THREE.AmbientLight(0x334466,.35));
