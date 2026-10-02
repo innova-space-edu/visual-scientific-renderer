@@ -46,3 +46,8 @@ export * from "./physics/plasma-demo.js";
 export * from "./astronomy/local-ephemeris.js";
 
 export * from "./physics/field-view.js";
+
+export * from "./chemistry/orbitals.js";
+export * from "./physics/analytic-fields.js";
+export * from "./biology/reaction-diffusion.js";
+export * from "./python/scientific-kernels.js";
