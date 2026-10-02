@@ -26,7 +26,8 @@
   "dependencies": {
     "three": "^0.180.0",
     "pyodide": "^0.28.3",
-    "@techstark/opencv-js": "5.0.0-release.1"
+    "@techstark/opencv-js": "5.0.0-release.1",
+    "@bb-studio/exr": "^0.2.0"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

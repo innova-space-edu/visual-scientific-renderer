@@ -53,3 +53,5 @@ export * from "./biology/reaction-diffusion.js";
 export * from "./python/scientific-kernels.js";
 
 export * from "./skills/scientific-skills.js";
+
+export * from "./export/exr.js";
