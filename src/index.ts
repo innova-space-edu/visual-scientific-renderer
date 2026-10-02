@@ -57,3 +57,7 @@ export * from "./skills/scientific-skills.js";
 export * from "./export/exr.js";
 
 export * from "./volume/webgpu-volume.js";
+
+export * from "./render/pathtrace-image.js";
+export * from "./render/three-adapter.js";
+export * from "./render/still-pipeline.js";
