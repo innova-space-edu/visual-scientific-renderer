@@ -1,4 +1,4 @@
-import {createProceduralMaterial} from "../materials/procedural.js";import {ParticleSystem} from "../particles/webgpu.js";import {makeGlowShell} from "../postfx/postfx.js";
+import {createProceduralMaterial} from "../materials/procedural.js";import {ParticleSystem} from "../particles/webgpu.js";import {makeGlowShell} from "../postfx/postfx.js";import {createAtmosphereShell,createSolarProminenceArcs} from "./planet-effects.js";
 export type SolarBodySpec={id:string;radius:number;distance:number;material:"sun"|"rocky"|"gas-giant"|"ice-giant";a:string;b:string;ring?:{inner:number;outer:number;opacity:number};tilt?:number;storm?:boolean};
 export const SOLAR_SYSTEM:SolarBodySpec[]=[
 {id:"sun",radius:.72,distance:0,material:"sun",a:"#ff6b00",b:"#fff0a8"},
@@ -20,11 +20,11 @@ export async function buildAdvancedSolarSystemScene(options:{scale?:number;parti
   const root=new THREE.Group();scene.add(root);const objects=new Map<string,any>(),scale=options.scale??1,seed=options.seed??42;
   for(let index=0;index<SOLAR_SYSTEM.length;index++){
     const body=SOLAR_SYSTEM[index]!,geometry=new THREE.SphereGeometry(body.radius*scale,96,64),material=await createProceduralMaterial(body.material,{seed:seed+index*13,colorA:body.a,colorB:body.b,bands:body.material==="gas-giant"?30:12,turbulence:body.id==="sun"?10:5,emissive:3.2,size:512,storm:body.storm,stormColor:"#a73018"}),mesh=new THREE.Mesh(geometry,material);
-    mesh.position.x=body.distance*scale;if(body.tilt)mesh.rotation.z=THREE.MathUtils.degToRad(body.tilt);root.add(mesh);objects.set(body.id,mesh);
+    mesh.position.x=body.distance*scale;if(body.tilt)mesh.rotation.z=THREE.MathUtils.degToRad(body.tilt);root.add(mesh);objects.set(body.id,mesh);if(body.id==="earth")mesh.add(await createAtmosphereShell(body.radius*scale,{color:0x5eb8ff,opacity:.12,scale:1.09}));if(body.id==="jupiter")mesh.add(await createAtmosphereShell(body.radius*scale,{color:0xd6b48b,opacity:.035,scale:1.025,additive:false}));
     const orbit=new THREE.Mesh(new THREE.RingGeometry(Math.max(.001,body.distance*scale-.003),body.distance*scale+.003,256),new THREE.MeshBasicNodeMaterial({color:0x263449,transparent:true,opacity:body.id==="sun"?0:.33,side:THREE.DoubleSide}));orbit.rotation.x=Math.PI/2;root.add(orbit);
     if(body.ring){const rg=new THREE.RingGeometry(body.ring.inner*scale,body.ring.outer*scale,256,16),rm=await createProceduralMaterial("rings",{seed:seed+300+index,colorA:"#4e4436",colorB:"#e8d8a9",opacity:body.ring.opacity,size:512}),ring=new THREE.Mesh(rg,rm);ring.rotation.x=Math.PI/2;mesh.add(ring)}
   }
-  const sun=objects.get("sun");if(sun){sun.add(new THREE.PointLight(0xfff2d0,90,0,1.4));sun.add(makeGlowShell(THREE,.72*scale,0xff7a00,1.2))}
+  const sun=objects.get("sun");if(sun){sun.add(new THREE.PointLight(0xfff2d0,90,0,1.4));sun.add(makeGlowShell(THREE,.72*scale,0xff7a00,1.2));sun.add(await createSolarProminenceArcs(.72*scale,14,seed+900))}
   scene.add(new THREE.AmbientLight(0x334466,.35));
   const particleCount=Math.max(1000,options.particleCount??12000),sim=new ParticleSystem({count:particleCount,seed,bounds:1.25*scale,drag:.015,radialForce:.018}),pg=new THREE.BufferGeometry();pg.setAttribute("position",new THREE.BufferAttribute(sim.positions,3));
   const pm=new THREE.PointsMaterial({color:0xff9b40,size:.012*scale,transparent:true,opacity:.48,depthWrite:false,blending:THREE.AdditiveBlending}),points=new THREE.Points(pg,pm);sun?.add(points);
@@ -33,7 +33,7 @@ export async function buildAdvancedSolarSystemScene(options:{scale?:number;parti
 export async function buildSingleBodyScene(bodyId:"sun"|"saturn",options:{particleCount?:number;seed?:number}={}){
   const THREE:any=await import("three/webgpu"),scene=new THREE.Scene();scene.background=new THREE.Color(0x01040a);scene.add(starfield(THREE,1800,options.seed??42));
   const spec=SOLAR_SYSTEM.find(x=>x.id===bodyId)!,material=await createProceduralMaterial(spec.material,{seed:options.seed??42,colorA:spec.a,colorB:spec.b,bands:32,turbulence:9,emissive:3.3,size:768}),mesh=new THREE.Mesh(new THREE.SphereGeometry(1.25,128,96),material);scene.add(mesh);
-  if(bodyId==="sun"){mesh.add(new THREE.PointLight(0xffe0a8,80,0,2));mesh.add(makeGlowShell(THREE,1.25,0xff6700,1.5))}
+  if(bodyId==="sun"){mesh.add(new THREE.PointLight(0xffe0a8,80,0,2));mesh.add(makeGlowShell(THREE,1.25,0xff6700,1.5));mesh.add(await createSolarProminenceArcs(1.25,22,(options.seed??42)+500))}
   if(bodyId==="saturn"){const rm=await createProceduralMaterial("rings",{seed:77,colorA:"#4f4533",colorB:"#f3dfaa",opacity:.78,size:1024}),ring=new THREE.Mesh(new THREE.RingGeometry(1.55,2.65,384,32),rm);ring.rotation.x=Math.PI/2.3;mesh.add(ring)}
   scene.add(new THREE.DirectionalLight(0xffffff,bodyId==="sun"?.15:4.5));scene.add(new THREE.AmbientLight(0x344766,.35));return{scene,mesh};
 }
