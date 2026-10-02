@@ -1,0 +1,11 @@
+FROM ubuntu:24.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends blender nodejs npm ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY package*.json ./
+RUN npm install --no-audit --no-fund
+COPY . .
+RUN npm run build:lib
+ENV PORT=8787
+EXPOSE 8787
+CMD ["node","scripts/start-blender-worker.mjs"]

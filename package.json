@@ -1,21 +1,35 @@
 {
-  "name":"@innova-space/visual-scientific-renderer",
-  "version":"0.1.0",
-  "private":false,
-  "type":"module",
-  "description":"Local-first scientific rendering stack for Visual Engine.",
-  "main":"./dist/index.js",
-  "types":"./dist/index.d.ts",
-  "exports":{".":"./dist/index.js","./browser":"./dist/browser.js","./node":"./dist/node.js"},
-  "scripts":{
-    "dev":"vite",
-    "build:lib":"tsc -p tsconfig.build.json",
-    "build":"npm run build:lib && vite build",
-    "typecheck":"tsc --noEmit -p tsconfig.json",
-    "test":"npm run build:lib && node --test test/*.test.mjs",
-    "check":"npm run typecheck && npm run test && npm run build"
+  "name": "@innova-space/visual-scientific-renderer",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "Local-first scientific rendering stack for Visual Engine.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./browser": "./dist/browser.js",
+    "./node": "./dist/node.js"
   },
-  "dependencies":{"three":"^0.180.0"},
-  "devDependencies":{"@types/node":"^24.0.0","@types/three":"^0.180.0","typescript":"^5.9.3","vite":"^7.1.0"},
-  "engines":{"node":">=22"}
+  "scripts": {
+    "dev": "vite",
+    "build:lib": "tsc -p tsconfig.build.json",
+    "build": "npm run build:lib && vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "npm run build:lib && node --test test/*.test.mjs",
+    "check": "npm run typecheck && npm run test && npm run build",
+    "start:blender-worker": "npm run build:lib && node scripts/start-blender-worker.mjs"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/three": "^0.180.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
 }
