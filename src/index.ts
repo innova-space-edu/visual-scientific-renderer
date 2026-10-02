@@ -26,3 +26,5 @@ export * from "./export/hdr.js";
 export * from "./plugins/registry.js";
 export * from "./learning/hooks.js";
 export * from "./runtime/benchmark.js";
+
+export * from "./astronomy/kernel-store.js";
