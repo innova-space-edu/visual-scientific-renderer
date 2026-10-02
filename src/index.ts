@@ -28,3 +28,7 @@ export * from "./learning/hooks.js";
 export * from "./runtime/benchmark.js";
 
 export * from "./astronomy/kernel-store.js";
+
+export * from "./runtime/orchestrator.js";
+export * from "./physics/plasma-visual.js";
+export * from "./vendor/runtime-manifest.js";
