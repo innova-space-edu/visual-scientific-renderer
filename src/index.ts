@@ -42,3 +42,5 @@ export * from "./render/motion.js";
 export * from "./integration/visual-engine.js";
 
 export * from "./physics/plasma-demo.js";
+
+export * from "./astronomy/local-ephemeris.js";
