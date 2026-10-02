@@ -51,3 +51,5 @@ export * from "./chemistry/orbitals.js";
 export * from "./physics/analytic-fields.js";
 export * from "./biology/reaction-diffusion.js";
 export * from "./python/scientific-kernels.js";
+
+export * from "./skills/scientific-skills.js";
