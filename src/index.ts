@@ -34,3 +34,9 @@ export * from "./physics/plasma-visual.js";
 export * from "./vendor/runtime-manifest.js";
 
 export * from "./astronomy/planet-effects.js";
+
+export * from "./particles/physics.js";
+export * from "./fields/marching-tetrahedra.js";
+export * from "./astronomy/kernel-updater.js";
+export * from "./render/motion.js";
+export * from "./integration/visual-engine.js";

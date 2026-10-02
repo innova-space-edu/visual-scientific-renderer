@@ -3,3 +3,4 @@ export * from "./blender/worker.js";
 export * from "./render/cache.js";
 export * from "./render/queue.js";
 export * from "./blender/server.js";
+export * from "./render/fs-cache.js";
