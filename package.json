@@ -21,7 +21,9 @@
     "start:blender-worker": "npm run build:lib && node scripts/start-blender-worker.mjs",
     "vendor:runtime": "node scripts/vendor-runtime.mjs",
     "check:runtime-assets": "node scripts/check-runtime-assets.mjs",
-    "postinstall": "node scripts/vendor-runtime.mjs"
+    "postinstall": "node scripts/vendor-runtime.mjs",
+    "vendor:science-python": "node scripts/vendor-pyodide-science.mjs numpy scipy sympy astropy matplotlib scikit-image",
+    "vendor:science-python:download": "node scripts/vendor-pyodide-science.mjs --download numpy scipy sympy astropy matplotlib scikit-image"
   },
   "dependencies": {
     "three": "^0.180.0",
