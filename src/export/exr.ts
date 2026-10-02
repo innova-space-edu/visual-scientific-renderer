@@ -14,8 +14,8 @@ export function encodeOpenEXR(width:number,height:number,rgba:Float32Array,optio
 }
 
 export function verifyOpenEXR(bytes:ArrayBuffer|Uint8Array){
-  const buffer=bytes instanceof Uint8Array?bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength):bytes;
-  return inspectExrImage(buffer);
+  const input=bytes instanceof Uint8Array?new Uint8Array(bytes):new Uint8Array(bytes);
+  return inspectExrImage(input);
 }
 
 export function rgbToRgbaFloat(rgb:Float32Array,alpha=1){
