@@ -6,7 +6,7 @@
   "description":"Local-first scientific rendering stack for Visual Engine.",
   "main":"./dist/index.js",
   "types":"./dist/index.d.ts",
-  "exports":{".":"./dist/index.js","./browser":"./dist/browser.js"},
+  "exports":{".":"./dist/index.js","./browser":"./dist/browser.js","./node":"./dist/node.js"},
   "scripts":{
     "dev":"vite",
     "build:lib":"tsc -p tsconfig.build.json",

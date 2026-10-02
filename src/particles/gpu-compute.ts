@@ -6,8 +6,8 @@ export class WebGPUParticleCompute{
     const adapter=await nav.gpu.requestAdapter();if(!adapter)throw new Error("No WebGPU adapter");
     this.device=await adapter.requestDevice();this.count=config.count;
     const interleaved=new Float32Array(config.count*8);for(let i=0;i<config.count;i++){const p=i*3,o=i*8;interleaved[o]=positions[p]!;interleaved[o+1]=positions[p+1]!;interleaved[o+2]=positions[p+2]!;interleaved[o+3]=1;interleaved[o+4]=velocities[p]!;interleaved[o+5]=velocities[p+1]!;interleaved[o+6]=velocities[p+2]!;}
-    this.particleBuffer=this.device.createBuffer({size:interleaved.byteLength,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST|GPUBufferUsage.COPY_SRC});this.device.queue.writeBuffer(this.particleBuffer,0,interleaved);
-    this.paramsBuffer=this.device.createBuffer({size:16,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+    const GPUUsage=(globalThis as any).GPUBufferUsage;if(!GPUUsage)throw new Error("WebGPU buffer constants unavailable");this.particleBuffer=this.device.createBuffer({size:interleaved.byteLength,usage:GPUUsage.STORAGE|GPUUsage.COPY_DST|GPUUsage.COPY_SRC});this.device.queue.writeBuffer(this.particleBuffer,0,interleaved);
+    this.paramsBuffer=this.device.createBuffer({size:16,usage:GPUUsage.UNIFORM|GPUUsage.COPY_DST});
     const module=this.device.createShaderModule({code:this.shader()});this.pipeline=await this.device.createComputePipelineAsync({layout:"auto",compute:{module,entryPoint:"main"}});
     this.bindGroup=this.device.createBindGroup({layout:this.pipeline.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:this.particleBuffer}},{binding:1,resource:{buffer:this.paramsBuffer}}]});
     return this;

@@ -12,4 +12,3 @@ export * from "./python/local-pyodide.js";
 export * from "./astronomy/spice-local.js";
 export * from "./render/cache.js";
 export * from "./render/queue.js";
-export * from "./blender/worker.js";
