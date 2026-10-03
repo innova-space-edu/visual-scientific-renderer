@@ -1,3 +1,4 @@
+import {geometryFromPrompt,buildPromptScene} from './studio/geometry.js';
 import "./style.css";
 import {loadLocalGLB} from "./render/local-model.js";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
@@ -10,6 +11,7 @@ const traceButton=$<HTMLButtonElement>("#trace"),exportButton=$<HTMLButtonElemen
 const smooth=$<HTMLInputElement>("#smooth");
 const targetSamples=$<HTMLSelectElement>("#samples"),resolution=$<HTMLSelectElement>("#resolution");
 let handle:any,camera:any,current:any,pipeline:any=null,controls:OrbitControls;
+let elapsed=0,modeActive=true;
 let currentScene="studio",loading=false,paused=false,exporting=false,animationId=0;
 let trace:PhysicalRenderSession|null=null,traceCanvas:HTMLCanvasElement|null=null,traceBuilding=false,traceEpoch=0;
 const clock=new FrameClock();let fpsStart=performance.now(),frames=0;
@@ -92,8 +94,8 @@ async function loadScene(name:string){
 function renderLive(){if(pipeline)pipeline.render();else handle.renderer.render(current.scene,camera)}
 function animate(t=performance.now()){
   animationId=requestAnimationFrame(animate);
-  if(document.hidden||!current||loading||exporting)return;
-  const dt=clock.tick(t);controls.update();
+  if(document.hidden||!modeActive||!current||loading||exporting)return;
+  const dt=clock.tick(t);controls.update();if(!paused){elapsed+=dt;current.update?.(elapsed)}
   frames++;if(t-fpsStart>=1000){fpsEl.textContent=String(Math.round(frames*1000/(t-fpsStart)));frames=0;fpsStart=t}
   if(trace){
     if(!traceBuilding&&trace.samples<+targetSamples.value){
@@ -163,7 +165,7 @@ document.querySelectorAll<HTMLElement>("[data-scene]").forEach(button=>button.ad
 exposure.addEventListener("input",()=>{if(handle)handle.renderer.toneMappingExposure=+exposure.value;trace?.setExposure(+exposure.value);trace?.display(smooth.checked)});
 smooth.addEventListener("change",()=>trace?.display(smooth.checked));
 bloom.addEventListener("input",()=>pipeline?.setBloom(+bloom.value));
-particles.addEventListener("change",()=>{if(currentScene!=="model")loadScene(currentScene)});
+particles.addEventListener("change",()=>{if(!["model","custom"].includes(currentScene))loadScene(currentScene)});
 traceButton.addEventListener("click",startTrace);exportButton.addEventListener("click",exportPNG);
 $("#cancel").addEventListener("click",()=>{stopTrace();message("Vista interactiva lista")});
 resolution.addEventListener("change",()=>{if(trace||traceBuilding){stopTrace();message("Resolución actualizada. Inicia un nuevo render físico.")}});
@@ -187,4 +189,11 @@ $<HTMLInputElement>("#model-file").addEventListener("change",async(event)=>{
   finally{loading=false;input.value="";clock.reset();updateButtons();resize()}
 });
 window.addEventListener("pagehide",()=>{cancelAnimationFrame(animationId);stopTrace();controls?.dispose();pipeline?.dispose?.();disposeScientificScene(current?.scene);handle?.dispose()},{once:true});
-init().catch(error=>{message("No se pudo iniciar: "+String(error));console.error(error)});
+document.addEventListener('visual-mode',((event:CustomEvent<string>)=>{modeActive=event.detail==='3d';if(!modeActive)stopTrace();clock.reset();resize()}) as EventListener);
+$("#create-geometry").addEventListener('click',async()=>{
+ if(!handle||loading||exporting)return;
+ let next:any;
+ try{const specs=geometryFromPrompt($<HTMLTextAreaElement>('#geometry-prompt').value);next=buildPromptScene(specs);stopTrace();loading=true;updateButtons();const nextPipeline=await createBloomPipeline(handle.renderer,next.scene,camera,{bloom:+bloom.value,bloomThreshold:1.2});pipeline?.dispose?.();disposeScientificScene(current?.scene);current=next;pipeline=nextPipeline;currentScene='custom';elapsed=0;setCamera([next.extent*.6,next.extent*.4,next.extent],[0,0,0]);controls.maxDistance=Math.max(40,next.extent*4);controls.saveState();sceneNotes.custom='Geometría calculada desde una gramática local. Péndulo: aproximación de ángulo pequeño; onda: modelo analítico. Las descripciones desconocidas requieren un modelo o una fórmula.';$('#scene-note').textContent=sceneNotes.custom;document.querySelectorAll('[data-scene]').forEach(b=>b.classList.remove('active'));message('Escena creada · '+specs.map(s=>s.kind).join(' + '));}catch(error){if(next&&next!==current)disposeScientificScene(next.scene);message('Revisa la descripción: '+String(error))}finally{loading=false;updateButtons();resize()}
+});
+document.addEventListener('capture-for-design',()=>{if(!handle||!current){message('Abre primero una escena 3D');return}try{if(!trace)renderLive();const source=traceCanvas??canvas;const copy=document.createElement('canvas');copy.width=source.width;copy.height=source.height;copy.getContext('2d')!.drawImage(source,0,0);document.dispatchEvent(new CustomEvent('captured-3d',{detail:copy.toDataURL('image/png')}));}catch(error){message('No se pudo capturar: '+String(error))}});
+init().catch(error=>{message('Este navegador no pudo iniciar WebGPU/WebGL. El Estudio 2D sigue disponible. '+String(error));console.error(error)});

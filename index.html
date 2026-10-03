@@ -3,10 +3,39 @@
 <head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#080c14"/><meta name="description" content="Motor de imágenes científicas sin IA: materiales físicos, geometría procedural y trazado de rayos local."/><link rel="icon" href="/favicon.svg"/><title>Visual Scientific Renderer · Innova Space</title></head>
 <body>
 <main class="app">
-<header class="top"><div><span class="eyebrow">INNOVA SPACE · VISUAL LAB</span><h1>Imágenes calculadas.<br class="mobile-break"/> Luz realista.</h1><p>Geometría, materiales y simulación. Sin IA generativa.</p></div><span class="local-badge"><i></i> Render local</span></header>
-<section class="layout">
+<header class="top"><div><span class="eyebrow">INNOVA SPACE · VISUAL LAB</span><h1>Visual Studio · 2D + 3D</h1><p>Contenido revisado, composición visual y simulación en un solo lugar.</p></div><span class="local-badge"><i></i> Render local</span></header>
+<nav class="mode-nav" aria-label="Espacio de trabajo"><button id="mode-2d" aria-pressed="true" class="active">Estudio 2D</button><button id="mode-3d" aria-pressed="false">Render y simulación 3D</button></nav>
+<section id="studio-2d" class="studio-layout">
+<aside class="studio-controls">
+<span class="eyebrow">01 · PREPARAR CONTENIDO</span><h2>¿Qué quieres crear?</h2>
+<label for="design-prompt">Tema o instrucciones</label><textarea id="design-prompt" rows="3">Área y volumen del cono y cilindro</textarea>
+<div class="action-row"><button id="draft">Preparar borrador local</button><button id="research">Investigar fuentes</button></div>
+<p class="note">El borrador local usa reglas y ejemplos. Investigar consulta fuentes públicas; el asistente de texto es opcional. El motor dibuja sin IA.</p>
+<label for="example">Ejemplos para probar</label><select id="example"></select>
+<span class="eyebrow">02 · REVISAR Y EDITAR</span>
+<label for="doc-title">Título</label><input id="doc-title" maxlength="180"/>
+<label for="doc-subtitle">Subtítulo</label><input id="doc-subtitle" maxlength="250"/>
+<div id="content-sections"></div><button id="add-section">Agregar sección</button>
+<label for="source-text">Fuentes · una por línea: título | https://...</label><textarea id="source-text" rows="3"></textarea>
+<button id="approve" class="primary">Aprobar contenido</button><p id="approval-state" role="status">Contenido pendiente de revisión</p>
+<span class="eyebrow">03 · COMPONER CON EL MOTOR</span>
+<label for="doc-format">Formato</label><select id="doc-format"><option value="landscape">Infografía horizontal</option><option value="portrait">Guía vertical</option><option value="square">Póster cuadrado</option><option value="brochure">Folleto · 3 columnas</option></select>
+<label for="doc-theme">Estilo</label><select id="doc-theme"><option value="educational">Educativo · bloques de color</option><option value="editorial">Editorial · papel cálido</option><option value="blueprint">Plano · azul técnico</option></select>
+<label for="doc-diagram">Diagrama calculado</label><select id="doc-diagram"><option value="solids">Cono y cilindro</option><option value="wave">Seno y coseno</option><option value="homothety">Homotecia</option><option value="blueprint">Plano sala de música</option><option value="molecule">Molécula de agua</option><option value="none">Sin diagrama</option></select>
+<label for="photo">Fotografía o ilustración local</label><input id="photo" type="file" accept="image/png,image/jpeg,image/webp"/><button id="remove-photo" hidden>Quitar fotografía</button>
+<p class="note">Puedes componer fotografías existentes y capturas del render 3D. Para crear escenas realistas, usa geometría, materiales y luz en 3D.</p>
+<button id="compose" class="primary">Generar material 2D</button>
+<label for="png-scale">Tamaño de exportación</label><select id="png-scale"><option value="1">Original</option><option value="2">2× · detalle alto</option></select>
+<div class="action-row"><button id="save-png">PNG</button><button id="save-jpg">JPG</button><button id="save-svg">SVG</button><button id="print-doc">PDF / imprimir</button></div>
+<div class="action-row"><button id="save-project">Guardar proyecto JSON</button><button id="load-project">Abrir proyecto</button></div><input id="project-file" type="file" accept=".json" hidden/>
+<details><summary>Python local · datos y cálculos</summary><p class="note">Worker aislado. Ejecuta Python y devuelve datos; no utiliza modelos de imágenes.</p><textarea id="python-code" rows="5">import json, math
+json.dumps([{"x": x/10, "y": math.sin(x/10)} for x in range(20)])</textarea><button id="run-python">Ejecutar Python</button><button id="plot-python">Usar datos Python en gráfico</button><button id="cancel-python" hidden>Cancelar cálculo</button><pre id="python-output"></pre></details>
+</aside>
+<section class="design-workspace"><div class="design-toolbar"><span>Vista del material</span><button id="use-3d">Usar captura 3D en el diseño</button></div><div id="design-status" role="status" aria-live="polite">Revisa el contenido y apruébalo para generar.</div><div id="design-preview" aria-label="Vista previa del material"><div class="empty-design">Tu contenido se convierte en una composición editable.<br/>Revisa los textos a la izquierda y pulsa Aprobar contenido.</div></div><p class="note">Las páginas crecen para mantener todo el texto legible. La salida PDF utiliza la impresión del navegador.</p></section>
+</section>
+<section class="layout" id="studio-3d" hidden>
 <aside class="panel" aria-label="Controles de escena">
-<h2>Biblioteca de escenas</h2>
+<h2>Crear desde una descripción</h2><label for="geometry-prompt">Geometría o simulación</label><textarea id="geometry-prompt" rows="3">Esfera azul y cono dorado, radio 1, altura 2</textarea><button id="create-geometry" class="primary">Crear escena 3D</button><p class="note">Combina esfera, cubo, cono, cilindro y toro. Prueba “péndulo altura 2”, “onda” o “superficie z=sin(x)*cos(y)”. Fórmulas: x, y, t, pi, sin, cos, sqrt, abs, exp, log y operadores.</p><h2>Biblioteca de escenas</h2>
 <button data-scene="studio" class="active"><span>01</span> Laboratorio de materiales</button>
 <button data-scene="saturn"><span>02</span> Saturno y anillos</button>
 <button data-scene="sun"><span>03</span> Sol y prominencias</button>
@@ -33,5 +62,5 @@
 <div class="viewport" id="viewport"><canvas id="view" aria-label="Escena científica interactiva"></canvas><div class="viewport-tools"><button id="pause" disabled>Pausar</button><button id="reset-camera">Restablecer cámara</button><button id="cancel" hidden>Salir del render físico</button></div><div class="camera-hint">Arrastra para orbitar · rueda para acercar · clic derecho para desplazar</div></div>
 <div class="render-status"><div id="status" role="status" aria-live="polite">Inicializando motor…</div><progress id="progress" max="1" value="0" aria-label="Progreso del render" hidden></progress><p id="scene-note">Preparando materiales físicos…</p></div>
 </section>
-</section></main><script type="module" src="/src/demo.ts"></script>
+</section></main><script type="module" src="/src/main.ts"></script>
 </body></html>
