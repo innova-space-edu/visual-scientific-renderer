@@ -1,30 +1,65 @@
 # Unified Visual Studio
 
-This update remains on `feat/scientific-renderer-v1` / PR #1. Two workspaces share the same page: 2D composition works without a GPU; 3D is loaded on demand.
+This update remains on `feat/scientific-renderer-v1` / PR #1. The 2D workspace now separates **AI research/editorial planning** from the **deterministic visual engine**. 3D remains lazy-loaded and independent.
 
-## Content and composition
+## AI editorial workflow
 
-1. Write a topic and prepare a local draft, import a saved project, or research public encyclopedia excerpts.
-2. Edit title, subtitle, up to 12 sections, formulas and source URLs. Approve the content explicitly.
-3. Compose horizontal/vertical/square/three-column material. Change layout and photographs without a model call.
-4. Export SVG, PNG/JPG at original or 2× resolution, JSON, or use the browser's Save as PDF print option.
+1. The user writes the full educational request: topic, audience, material type, sections, exercises, visual style and constraints.
+2. `POST /api/content-plan` optionally researches the topic. When `GEMINI_API_KEY` is configured it uses Gemini with Google Search grounding; if search fails it falls back to fixed Wikipedia retrieval.
+3. The planner produces structured JSON only. Provider routing supports Gemini, Groq and OpenRouter, with an automatic fallback chain.
+4. The user edits every title, paragraph, formula, block type, source, preset, palette, background, density and column count.
+5. A single section can be rewritten by AI without regenerating the whole document.
+6. Approval freezes the current content/design signature. Any edit invalidates approval.
+7. The SVG/Canvas/Python/3D engines render the approved snapshot. No image-generation model is called.
 
-Content edits invalidate approval. The last rendered output remains an immutable snapshot until a new composition succeeds. Text wraps and document height grows; PDF printing scales this document onto the selected paper size, so extensive documents are better exported as SVG or split manually. Formats describe layout; actual height grows to fit content.
+Server-only environment variables:
 
-MathJax is bundled locally and emits vector glyphs, not HTML foreignObject. The six example drafts are editable teaching examples, not an arbitrary-topic knowledge model. Unknown topics get editable empty content fields. Diagram families currently include solids, sine, homothety, a schematic music-room plan and water molecule. Imported PNG/JPEG/WebP files remain local. A conventional renderer cannot synthesize every photograph from an unrestricted description; photo composition and physical 3D renders require existing assets or specified geometry.
+- `GEMINI_API_KEY`
+- `GEMINI_TEXT_MODEL_PRIMARY` (optional)
+- `GROQ_API_KEY`
+- `GROQ_TEXT_MODEL` (optional)
+- `OPENROUTER_API_KEY`
+- `OPENROUTER_TEXT_MODEL` (optional)
+- `PUBLIC_APP_URL` (optional OpenRouter referer)
 
-## Research
+The browser never receives provider keys.
 
-`POST /api/research` searches three Spanish Wikipedia extracts using a fixed endpoint. It returns actual source URLs and never asserts that a source was independently verified. The user reviews the returned excerpts before approving. No credentials are required for source retrieval.
+## VisualDocument v2
 
-An optional text-only OpenAI-compatible backend uses **server-side** `CONTENT_API_URL`, `CONTENT_API_KEY`, `CONTENT_MODEL`. Without them, original excerpts are returned. This implementation does not call image models. Source attribution and teacher review remain necessary; encyclopedia extraction is not a general web research engine. Local Vite does not run Vercel serverless routes; research needs the preview deployment.
+The document adds semantic material metadata and a design system while preserving the original section model:
+
+- `documentType`, `audience`, `subject`
+- block kinds: text, key idea, formula, steps, exercise, warning, comparison
+- editable `DesignSpec`: preset, palette, background, density, columns and corner style
+- AI metadata (provider/model/search path)
+- source URLs retained separately from rendered content
+
+The engine decides concrete coordinates. The AI does **not** output absolute x/y positions, preventing layout breakage when text changes.
+
+Built-in design presets:
+
+- educational-clean
+- mathematics-pastel
+- science-classroom
+- technical-blueprint
+- institutional
+- kids-illustrated
+- minimal-editorial
+
+## Deterministic composition
+
+The composer reads the design palette, background pattern, density and column count. It supports solid/gradient/grid/dots/paper backgrounds and semantic card accents while retaining MathJax SVG formulas, diagrams, imported photos, Python plots and 3D captures.
+
+Long documents continue to grow rather than crop. PDF uses browser print; SVG is the preferred lossless export.
+
+## Research-only endpoint
+
+`POST /api/research` remains available as a lightweight Wikipedia/source workflow. The richer `/api/content-plan` endpoint is the main path for AI-assisted material creation.
 
 ## Python and geometry
 
-Python runs through the existing local Pyodide worker, with cancellation and a 60-second limit. Return JSON `[{"x":0,"y":0},...]` (2–2000 finite points) and click Use Python data to incorporate a plot. This first integration uses the standard runtime; scientific packages require the project's existing vendoring workflow.
-
-3D prompts combine sphere/box/cone/cylinder/torus, with radius/height, or choose an analytic wave/pendulum. Custom height fields use `z=sin(x)*cos(y)` with a bounded expression parser; no eval or JavaScript execution. Surfaces reject singularities and values outside ±50. Pendulum is the small-angle approximation; wave is analytic, not a numerical PDE solver. Import GLB for other geometry. The browser must support WebGPU or WebGL2 for 3D. Switching back to 2D stops the physical render and pauses interactive scene processing.
+Python still runs through the isolated local Pyodide worker with a 60-second limit. 3D prompts combine supported primitives and safe analytic surfaces, with GLB import for external geometry.
 
 ## Validation
 
-`npm run check`: TypeScript, 43 tests and production build. Added tests cover safe mathematical parsing, surface normals/singularities, escaped SVG content, formulas, growing layouts, asset validation and combined geometry. SVG outputs inspected using ordinary rasterization. Native GPU verification is separate from geometry tests.
+Run `npm run check` after changes: TypeScript, Node tests and production build. Native 3D GPU verification remains separate from geometry/unit validation.
