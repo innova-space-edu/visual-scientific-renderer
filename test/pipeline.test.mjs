@@ -39,3 +39,12 @@ test('Gemini agents keep keys in headers and reserve output tokens for complete 
 test('provider quota failures are actionable and never expose key values',()=>isolated(async()=>{
  process.env.GEMINI_API_KEY='private-test-key';globalThis.fetch=async()=>({ok:false,status:429});const {code,value}=await call('afiche de fotosíntesis');assert.equal(code,503);assert.match(value.error,/cuota/);assert.ok(!JSON.stringify(value).includes('private-test-key'));
 }));
+
+test('a requested central water-cycle illustration survives the editorial and validation agents',()=>isolated(async()=>{
+ process.env.GROQ_API_KEY='test-key';const replies=[{topic:'Ciclo del agua',domain:'science',preset:'science-classroom'},{title:'Ciclo del agua',diagram:'none',sections:[{title:'Evaporación',text:'El calor convierte el agua en vapor.'},{title:'Condensación',text:'El vapor se enfría y forma gotas.'},{title:'Precipitación',text:'El agua cae como lluvia, nieve o granizo.'}]},{accepted:true,issues:[]}];
+ globalThis.fetch=async(url)=>String(url).includes('wikipedia')?{ok:true,json:async()=>({})}:{ok:true,json:async()=>({choices:[{message:{content:JSON.stringify(replies.shift())}}]})};
+ const {code,value}=await call('Crea un afiche vertical del ciclo del agua con una ilustración central');assert.equal(code,200);assert.equal(value.document.diagram,'water-cycle');const out=composeSVG(value.document);assert.match(out.svg,/data-diagram="water-cycle"/);assert.match(out.svg,/Agua subterránea/);assert.match(out.svg,/water-arrow/);assert.ok(out.height>out.width);const placements=[...out.svg.matchAll(/data-section="\d+"[^>]*><title>[^<]*<\/title><rect x="(\d+)"/g)].map(m=>m[1]);assert.equal(new Set(placements).size,2);
+}));
+test('long grounding redirect URLs remain linked without expanding the image footer',async()=>{
+ const {solarDocument}=await import('../dist/studio/solar.js');const d=solarDocument(inferBrief('afiche vertical del sistema solar'));d.sources=[{id:'s1',title:'NASA',url:'https://example.org/redirect/'+ 'x'.repeat(900)}];const long=composeSVG(d);const short=composeSVG({...d,sources:[{...d.sources[0],url:'https://example.org'}]});assert.equal(long.height,short.height);assert.match(long.svg,/\[1\] NASA/);assert.ok(long.svg.includes(d.sources[0].url));
+});

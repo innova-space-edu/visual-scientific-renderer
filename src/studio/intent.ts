@@ -12,7 +12,7 @@ export function inferBrief(prompt:string):Brief{
 }
 export function applyBrief(doc:VisualDocument,b:Brief):VisualDocument{
  const design=structuredClone(DESIGN_PRESETS[b.preset]||DESIGN_PRESETS['educational-clean']);
- design.columns=b.documentType==='brochure'?3:b.format==='portrait'?1:b.brief?4:2;
+ design.columns=b.documentType==='brochure'?3:b.format==='portrait'?(b.documentType==='poster'?2:1):b.brief?4:2;
  if(b.documentType==='activity')design.columns=1;
  return {...doc,version:2,documentType:b.documentType,audience:b.audience,format:b.format,theme:b.preset==='technical-blueprint'?'blueprint':'educational',design};
 }

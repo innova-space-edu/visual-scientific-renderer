@@ -32,3 +32,5 @@ Set keys on the renderer's Vercel project, Production environment. None belongs 
 ## Verification
 
 `npm run check` covers types (including APIs), tests and production build. Regression cases cover the user's horizontal 1° Medio Solar System request, exact Cramer systems, extracted-topic searches, shared skill/research context, critic repair/rejection, malformed input, orientation, non-overlapping layout and unsafe assets.
+
+Los afiches verticales combinan un héroe visual y tarjetas en dos columnas. El ciclo del agua dispone de una ilustración SVG propia cuando se solicita; las fuentes se exportan como títulos numerados con enlaces, sin imprimir las direcciones de grounding.

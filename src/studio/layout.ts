@@ -18,7 +18,7 @@ export function measureCard(s:ContentSection,width:number,d:VisualDocument):Card
 /** Semantic regions and spans are packed into non-overlapping lanes. Text decides heights. */
 export function planLayout(d:VisualDocument,width:number,startY:number):{cards:Placement[];bottom:number;columns:number;template:string}{
  const margin=36,gap=20,available=width-2*margin,type=d.documentType||'infographic';
- const columns=d.format==='portrait'?1:type==='brochure'||d.format==='brochure'?3:type==='poster'?2:type==='guide'?3:type==='activity'?1:Math.min(4,d.design?.columns||2);
+ const columns=d.format==='portrait'&&type!=='poster'?1:type==='brochure'||d.format==='brochure'?3:type==='poster'?2:type==='guide'?3:type==='activity'?1:Math.min(4,d.design?.columns||2);
  const columnWidth=(available-gap*(columns-1))/columns,cards:Placement[]=[];let bottom=startY;
  const place=(index:number,col:number,y:number,span=1)=>{const w=columnWidth*span+gap*(span-1),measure=measureCard(d.sections[index],w,d),card={index,x:margin+col*(columnWidth+gap),y,width:w,height:measure.height,measure};cards.push(card);bottom=Math.max(bottom,y+card.height);return y+card.height+gap;};
  const regional=columns===2&&d.sections.some(s=>s.region==='worked-example');

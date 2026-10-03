@@ -1,5 +1,5 @@
 import {cramerSections} from './cramer.js';
-export const SECTION_DIAGRAMS=['solar-system','sun','mercury','venus','earth','mars','jupiter','saturn','uranus','neptune','solids','wave','homothety','blueprint','molecule','none','angle-central','angle-inscribed','angle-interior','angle-exterior','tangent'];
+export const SECTION_DIAGRAMS=['water-cycle','solar-system','sun','mercury','venus','earth','mars','jupiter','saturn','uranus','neptune','solids','wave','homothety','blueprint','molecule','none','angle-central','angle-inscribed','angle-interior','angle-exterior','tangent'];
 export type ContentKind='text'|'key-idea'|'formula'|'steps'|'exercise'|'warning'|'comparison'|'table';
 export type ContentSection={title:string;text:string;formula?:string;kind?:ContentKind;sourceIds?:string[];visualHint?:string;priority?:number;visual?:{type:'flow'|'cycle';labels:string[]};equations?:string[];diagram?:string;table?:{headers:string[];rows:string[][]};image?:string;caption?:string;region?:'overview'|'worked-example'|'practice'|'footer';span?:1|2|3|4;icon?:'bulb'|'calculator'|'book'|'arrow'|'check'|'warning';tone?:'blue'|'pink'|'green'|'purple'|'gold'};
 export type Source={id?:string;title:string;url:string};

@@ -1,3 +1,4 @@
+import {waterCycleSVG} from './water-cycle.js';
 const planetColors:Record<string,string>={sun:'#f3b735',mercury:'#a99d96',venus:'#d6a963',earth:'#468dcc',mars:'#cc6c4b',jupiter:'#c79e7b',saturn:'#d9bd83',uranus:'#7ebfc4',neptune:'#4671c5'};
 export function planetSVG(kind:string,x:number,y:number,r:number):string{
  const color=planetColors[kind];if(!color)return '';
@@ -17,6 +18,7 @@ export function planetSVG(kind:string,x:number,y:number,r:number):string{
 const line=(x:number,y:number,a:number,b:number,color='#24538c',dash='')=>`<path d="M${x} ${y}L${a} ${b}" fill="none" stroke="${color}" stroke-width="3" ${dash?'stroke-dasharray="'+dash+'"':''}/>`;
 const label=(x:number,y:number,s:string,color='#183759')=>`<text x="${x}" y="${y}" fill="${color}" font-size="22" font-family="sans-serif">${s}</text>`;
 export function diagramSVG(kind:string):string{
+ if(kind==='water-cycle')return waterCycleSVG();
  const defs='<defs><linearGradient id="solid" x2="1" y2="0"><stop stop-color="#8ce0fa"/><stop offset=".45" stop-color="#e2f8ff"/><stop offset="1" stop-color="#259acb"/></linearGradient><linearGradient id="gold"><stop stop-color="#fff0b2"/><stop offset="1" stop-color="#efaa42"/></linearGradient><radialGradient id="atom"><stop stop-color="#ffab9f"/><stop offset="1" stop-color="#c92454"/></radialGradient></defs>';
  let body='';
  if(kind==='solar-system'){const names=['Sol','Mercurio','Venus','Tierra','Marte','Júpiter','Saturno','Urano','Neptuno'],keys=Object.keys(planetColors);body='<rect width="1200" height="150" rx="18" fill="#112b4a"/>';for(let i=0;i<75;i++)body+=`<circle cx="${(i*173+41)%1200}" cy="${(i*47+13)%145}" r="${i%3===0?1.5:.8}" fill="#daeaff" opacity=".45"/>`;keys.forEach((k,i)=>{const x=75+i*130,r=[32,12,19,20,16,32,27,23,22][i];body+=planetSVG(k,x,65,r)+label(x-names[i].length*5,130,names[i],'#e9f5ff');});return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 150">${body}</svg>`;}

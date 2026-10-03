@@ -37,7 +37,7 @@ function composeAtWidth(input:VisualDocument,override?:number):{svg:string;width
  let start=headerHeight+56;
  if(d.diagram!=='none'||d.photo||d.points){const hh=d.documentType==='technical-plan'?620:d.documentType==='poster'?430:d.diagram==='solar-system'?240:300;content+=heroSVG(d,36,start,width-72,hh);start+=hh+22;}
  const layout=planLayout(d,width,start);for(const card of layout.cards)content+=cardSVG(card,d.sections[card.index],d);let y=layout.bottom;
- if(d.sources.length){content+=textSVG(['Fuentes revisadas'],36,y+24,20,p.ink,true);y+=50;for(const s of d.sources){const ls=linesFor(s.title+' · '+s.url,width-72,15);content+=`<a href="${escapeXML(s.url)}">${textSVG(ls,36,y,15,p.ink)}</a>`;y+=ls.length*22+10;}}
+ if(d.sources.length){content+=textSVG(['Fuentes revisadas'],36,y+24,20,p.ink,true);y+=50;for(const [i,s] of d.sources.entries()){const ls=linesFor('['+(i+1)+'] '+s.title,width-72,15);content+=`<a href="${escapeXML(s.url)}">${textSVG(ls,36,y,15,p.ink)}</a>`;y+=ls.length*22+10;}}
  const height=Math.max(baseHeight,Math.ceil(y+62));content+=`<path d="M36 ${height-48}H${width-36}" stroke="${p.secondary}" opacity=".25"/>${textSVG(['INNOVA SPACE · VISUAL STUDIO'],36,height-22,13,p.ink)}${textSVG([`${layout.template} · ${d.audience||'Material educativo'}`],width-470,height-22,13,p.ink)}`;
  return{svg:`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeXML(d.title)}" data-template="${layout.template}"><rect width="100%" height="100%" fill="${p.background}"/>${background(d)}${content}</svg>`,width,height};
 }
