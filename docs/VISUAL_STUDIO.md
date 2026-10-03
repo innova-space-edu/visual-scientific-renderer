@@ -27,4 +27,4 @@ Python runs through the existing local Pyodide worker, with cancellation and a 6
 
 ## Validation
 
-`npm run check`: TypeScript, 42 tests and production build. Added tests cover safe mathematical parsing, surface normals/singularities, escaped SVG content, formulas, growing layouts, asset validation and combined geometry. SVG outputs inspected using ordinary rasterization. Native GPU verification is separate from geometry tests.
+`npm run check`: TypeScript, 43 tests and production build. Added tests cover safe mathematical parsing, surface normals/singularities, escaped SVG content, formulas, growing layouts, asset validation and combined geometry. SVG outputs inspected using ordinary rasterization. Native GPU verification is separate from geometry tests.

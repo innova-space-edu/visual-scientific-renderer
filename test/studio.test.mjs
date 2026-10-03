@@ -22,3 +22,8 @@ test('long documents grow without discarding sections and imported active assets
 test('prompts support combined primitives and custom surfaces, unknown requests are explicit',()=>{
  assert.equal(geometryFromPrompt('esfera y cono').length,2);assert.equal(geometryFromPrompt('superficie z=sin(x)*cos(y)')[0].formula,'sin(x)*cos(y)');assert.throws(()=>geometryFromPrompt('fotografía de una ciudad'));assert.throws(()=>geometryFromPrompt('esfera radio 999'));
 });
+test('Python blob worker receives an absolute runtime URL in every request',async()=>{
+ const {PyodideWorkerClient}=await import('../dist/python/pyodide-worker.js');const previousWorker=globalThis.Worker,previousLocation=globalThis.location;let posted;
+ globalThis.location={href:'https://studio.example/app/'};globalThis.Worker=class{postMessage(value){posted=value;this.onmessage({data:{id:value.id,ok:true,result:2}})}terminate(){}};
+ try{const client=new PyodideWorkerClient();assert.equal(await client.run('1+1'),2);assert.equal(posted.indexURL,'https://studio.example/vendor/pyodide/');client.terminate();}finally{globalThis.Worker=previousWorker;globalThis.location=previousLocation}
+});
