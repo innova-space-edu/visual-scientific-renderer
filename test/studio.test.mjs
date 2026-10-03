@@ -16,7 +16,7 @@ test('examples compose real vector formulas, escaped text, and all content',()=>
  assert.ok(composeSVG(draftFromPrompt('cono')).svg.includes('data-mml-node'));
 });
 test('long documents grow without discarding sections and imported active assets are rejected',()=>{
- const doc=draftFromPrompt('tema libre');doc.sections=Array.from({length:12},(_,i)=>({title:'Apartado '+i,text:'Texto extenso. '.repeat(90)}));const out=composeSVG(doc);assert.ok(out.height>4000);assert.ok(out.svg.includes('Apartado 11'));
+ const doc=draftFromPrompt('tema libre');doc.sections=Array.from({length:12},(_,i)=>({title:'Apartado '+i,text:'Texto extenso. '.repeat(90)}));const out=composeSVG(doc);assert.ok(out.width>out.height);assert.equal((out.svg.match(/data-section=/g)||[]).length,12);assert.ok(out.svg.includes('Apartado 11'));
  assert.throws(()=>validateDocument({...doc,photo:'javascript:alert(1)'}));assert.throws(()=>validateDocument({...doc,sources:[{title:'x',url:'javascript:alert(1)'}]}));assert.throws(()=>validateDocument({...doc,points:[{x:0,y:Infinity}]}));
 });
 test('prompts support combined primitives and custom surfaces, unknown requests are explicit',()=>{

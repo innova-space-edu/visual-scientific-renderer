@@ -8,7 +8,8 @@ export function measureCard(s:ContentSection,width:number,d:VisualDocument):Card
  const texs=[...(s.formula?[s.formula]:[]),...(s.equations||[])];let formulaHeight=0;const usable=inner-28;
  const paired=width>600&&texs.length>1&&texs[0].includes('vmatrix'),across=width>600&&texs.length===2&&!paired&&worked&&texs.every(t=>measureFormula(t,(usable-20)/2,26).width/measureFormula(t,10000,26).width>.72);
  const equations=texs.map((tex,i)=>{const slot=paired?(i===0?usable*.32:usable*.62):across?(usable-20)/texs.length:inner-28;const m=measureFormula(tex,slot,worked?26:29);const offsetX=paired?(i===0?0:usable*.36):across?i*(usable/texs.length):0;let offsetY=0;if(paired&&i>0)offsetY=texs.slice(1,i).reduce((sum,t)=>sum+measureFormula(t,usable*.62,worked?26:29).height+10,0);else if(!across&&!paired)offsetY=formulaHeight;formulaHeight=Math.max(formulaHeight,offsetY+m.height+(worked?12:24));return{tex,...m,offsetX,offsetY};});
- const mediaHeight=s.diagram&&s.diagram!=='none'||s.image?Math.min(330,inner*.66):0;
+ const astro=s.diagram&&['sun','mercury','venus','earth','mars','jupiter','saturn','uranus','neptune'].includes(s.diagram);
+ const mediaHeight=s.diagram&&s.diagram!=='none'||s.image||s.visual?(astro?135:Math.min(330,inner*.66)):0;
  const tableLines=s.table?[s.table.headers,...s.table.rows].map(row=>row.map(cell=>linesFor(cell,inner/row.length-20,fontSize))):[];
  const tableHeights=tableLines.map(row=>Math.max(...row.map(cell=>cell.length))*lineHeight+20);
  const height=pad*2+heading.length*32+(s.region==='worked-example'?10:20)+body.length*lineHeight+(body.length?12:0)+formulaHeight+(equations.length?14:0)+(mediaHeight?mediaHeight+18:0)+(s.caption?linesFor(s.caption,inner,16).length*23+10:0)+tableHeights.reduce((a,b)=>a+b,0);
@@ -25,7 +26,7 @@ export function planLayout(d:VisualDocument,width:number,startY:number):{cards:P
  else if(type==='brochure'||d.format==='brochure'){
   const weights=d.sections.map(s=>measureCard(s,columnWidth,d).height+gap),target=weights.reduce((a,b)=>a+b,0)/columns;let col=0,y=startY,total=0;
   d.sections.forEach((_,i)=>{if(col<columns-1&&total>=target&&d.sections.length-i>=columns-col-1){col++;y=startY;total=0;}y=place(i,col,y);total+=weights[i];});
- }else if(type==='worksheet'||type==='guide'){
+ }else if(type==='worksheet'||type==='guide'||d.diagram==='solar-system'){
   let y=startY;
   for(let start=0;start<d.sections.length;){
    const s=d.sections[start];if(s.span&&s.span>1||s.region==='footer'){y=place(start,0,y,columns);start++;continue;}

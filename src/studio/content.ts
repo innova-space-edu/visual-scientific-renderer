@@ -1,7 +1,7 @@
 import {cramerSections} from './cramer.js';
-export const SECTION_DIAGRAMS=['solids','wave','homothety','blueprint','molecule','none','angle-central','angle-inscribed','angle-interior','angle-exterior','tangent'];
+export const SECTION_DIAGRAMS=['solar-system','sun','mercury','venus','earth','mars','jupiter','saturn','uranus','neptune','solids','wave','homothety','blueprint','molecule','none','angle-central','angle-inscribed','angle-interior','angle-exterior','tangent'];
 export type ContentKind='text'|'key-idea'|'formula'|'steps'|'exercise'|'warning'|'comparison'|'table';
-export type ContentSection={title:string;text:string;formula?:string;kind?:ContentKind;sourceIds?:string[];visualHint?:string;priority?:number;equations?:string[];diagram?:string;table?:{headers:string[];rows:string[][]};image?:string;caption?:string;region?:'overview'|'worked-example'|'practice'|'footer';span?:1|2|3|4;icon?:'bulb'|'calculator'|'book'|'arrow'|'check'|'warning';tone?:'blue'|'pink'|'green'|'purple'|'gold'};
+export type ContentSection={title:string;text:string;formula?:string;kind?:ContentKind;sourceIds?:string[];visualHint?:string;priority?:number;visual?:{type:'flow'|'cycle';labels:string[]};equations?:string[];diagram?:string;table?:{headers:string[];rows:string[][]};image?:string;caption?:string;region?:'overview'|'worked-example'|'practice'|'footer';span?:1|2|3|4;icon?:'bulb'|'calculator'|'book'|'arrow'|'check'|'warning';tone?:'blue'|'pink'|'green'|'purple'|'gold'};
 export type Source={id?:string;title:string;url:string};
 export type Palette={primary:string;secondary:string;accent:string;background:string;surface:string;ink:string};
 export type DesignSpec={preset:string;palette:Palette;background:'solid'|'soft-gradient'|'grid'|'dots'|'paper';density:'airy'|'medium'|'compact';columns?:1|2|3|4;cornerStyle?:'soft'|'rounded'|'square'};
@@ -53,6 +53,7 @@ export function validateDocument(value:unknown):VisualDocument{
  for(const s of d.sections)if(typeof s.title!=='string'||s.title.length>100||typeof s.text!=='string'||s.text.length>1600||(s.formula!==undefined&&(typeof s.formula!=='string'||s.formula.length>500))||(s.kind!==undefined&&!['text','key-idea','formula','steps','exercise','warning','comparison','table'].includes(s.kind)))throw new Error('Sección inválida');
  for(const s of d.sections){
   if(s.equations&&(!Array.isArray(s.equations)||s.equations.length>8||s.equations.some(t=>typeof t!=='string'||t.length>1200)))throw new Error('Ecuaciones inválidas');
+  if(s.visual&&(!['flow','cycle'].includes(s.visual.type)||!Array.isArray(s.visual.labels)||s.visual.labels.length<2||s.visual.labels.length>6||s.visual.labels.some(v=>typeof v!=='string'||v.length>80)))throw new Error('Diagrama semántico inválido');
   if(s.diagram&&!SECTION_DIAGRAMS.includes(s.diagram))throw new Error('Diagrama de sección inválido');
   if(s.region&&!['overview','worked-example','practice','footer'].includes(s.region))throw new Error('Región inválida');
   if(s.span!==undefined&&![1,2,3,4].includes(s.span))throw new Error('Ancho de tarjeta inválido');
