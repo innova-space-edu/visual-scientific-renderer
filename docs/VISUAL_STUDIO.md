@@ -1,6 +1,6 @@
 # Unified Visual Studio
 
-This update remains on `feat/scientific-renderer-v1` / PR #1. The 2D workspace now separates **AI research/editorial planning** from the **deterministic visual engine**. 3D remains lazy-loaded and independent.
+Implemented in `feat/scientific-renderer-v1` / PR #1. The 2D workspace now separates **AI research/editorial planning** from the **deterministic visual engine**. 3D remains lazy-loaded and independent.
 
 ## AI editorial workflow
 
@@ -63,3 +63,23 @@ Python still runs through the isolated local Pyodide worker with a 60-second lim
 ## Validation
 
 Run `npm run check` after changes: TypeScript, Node tests and production build. Native 3D GPU verification remains separate from geometry/unit validation.
+
+## Reference-driven 2D layout
+
+The inspected Cramer, sine/cosine, circle-angle and technical-plan references informed the title hierarchy, pastel bands, numbered panels, equation boxes, local vector icons and adjacent worked examples. Reference images are inspiration, not included as generated artwork.
+
+`layout.ts` measures every heading, paragraph, MathJax viewBox, diagram and table row before packing cards. `typography.ts` shares conservative Arial advances with the renderer. No paragraph or equation is discarded to fit a fixed canvas; long content increases its height.
+
+Material rules differ: infographics pack variable cards/spans; posters feature a full-width opening; worksheets and guides preserve row reading order; brochures pack sequential content into three panels; activities use a single reading column; technical plans emphasize the drawing area. Semantic overview/worked-example regions produce parallel explanation/example lanes. Portrait always uses one column. User-selected card spans and footer regions allow wider panels without absolute AI coordinates.
+
+Sections accept `equations` (up to 8), `diagram`, local raster `image` and `caption`, `table: {headers, rows}`, `region`, `span`, `icon` and `tone`. Projects support up to 24 sections. UI controls edit/reorder these blocks and invalidate both approval and stale exports after any change, including photos, formats and Python data.
+
+Local Cramer handles explicit coefficient systems in x/y or x/y/z. Example: `Cramer 2x+y=5; x-y=1`. It computes each determinant, column replacement, solution and substitution independently of IA/API keys; incomplete systems are rejected and a singular system never divides by zero. Without explicit equations it uses a labeled example. 3×3 cofactor expansion is displayed on separate LaTeX rows for readability. Decimal approximations are labeled, and verification uses determinant ratios. This is a bounded linear-system grammar, not a general symbolic algebra interpreter.
+
+Generated SVG and editable JSON examples live in `public/examples/`. Circle diagrams calculate their chords/secant intersection points locally. Other topics can be structured by the editorial IA and edited manually; new domain-specific drawing families still require explicit renderer implementations. Photographs come from imported assets, not synthesized image-model output.
+
+## Single-deploy completion
+
+`vercel.json` disables Git-triggered deployment of the existing PR work branch while keeping main enabled. After local checks and GitHub CI, merging PR #1 triggers the single production deployment. This avoids a preview build plus a second production build for this completion.
+
+Validation includes API typechecking, offline Cramer endpoint tests, coefficient/singular-system cases, matrices/multiline MathJax, malformed rich assets and tables, and packing across all presets/formats/material types. Local DOM integration covers prompt → approve → render, edit invalidation, portrait recomposition and circle gallery. GPU rendering requires a capable browser/device.

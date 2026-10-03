@@ -1,0 +1,148 @@
+{
+  "version": 2,
+  "documentType": "infographic",
+  "title": "Método de Cramer",
+  "subtitle": "Resolución de sistemas de ecuaciones lineales · Paso a paso",
+  "sections": [
+    {
+      "title": "Idea general",
+      "text": "Resuelve sistemas con igual número de ecuaciones e incógnitas mediante determinantes. El determinante principal debe ser distinto de cero.",
+      "kind": "key-idea",
+      "icon": "bulb",
+      "region": "overview"
+    },
+    {
+      "title": "Sistema general",
+      "text": "Ordena los coeficientes de cada incógnita en columnas y los términos independientes a la derecha.",
+      "formula": "A\\mathbf{x}=\\mathbf{b}",
+      "kind": "formula",
+      "region": "overview"
+    },
+    {
+      "title": "Determinantes y regla",
+      "text": "A contiene los coeficientes. Para cada incógnita reemplaza su columna por los términos independientes; conserva las otras columnas.",
+      "equations": [
+        "D=\\det(A)",
+        "x=\\frac{D_x}{D}",
+        "y=\\frac{D_y}{D}",
+        "z=\\frac{D_z}{D}"
+      ],
+      "kind": "formula",
+      "region": "overview"
+    },
+    {
+      "title": "Condición de aplicación",
+      "text": "Si D = 0, Cramer no proporciona una solución única. El sistema puede ser incompatible o tener infinitas soluciones; requiere otro análisis.",
+      "kind": "warning",
+      "region": "overview",
+      "icon": "warning"
+    },
+    {
+      "title": "Ejemplo resuelto",
+      "text": "",
+      "formula": "\\begin{cases}x+y+z=6\\\\2x-y+z=3\\\\x+2y-z=2\\end{cases}",
+      "kind": "key-idea",
+      "region": "worked-example"
+    },
+    {
+      "title": "Determinante principal",
+      "text": "",
+      "tone": "pink",
+      "equations": [
+        "D=\\begin{vmatrix}1&1&1\\\\2&-1&1\\\\1&2&-1\\end{vmatrix}",
+        "D=\\begin{aligned}&1((-1)\\cdot(-1)-1\\cdot2)\\\\&-1(2\\cdot(-1)-1\\cdot1)\\\\&+1(2\\cdot2-(-1)\\cdot1)\\end{aligned}",
+        "D=7"
+      ],
+      "kind": "formula",
+      "region": "worked-example"
+    },
+    {
+      "title": "Determinante de x",
+      "text": "",
+      "tone": "blue",
+      "equations": [
+        "D_x=\\begin{vmatrix}6&1&1\\\\3&-1&1\\\\2&2&-1\\end{vmatrix}",
+        "D_x=\\begin{aligned}&6((-1)\\cdot(-1)-1\\cdot2)\\\\&-1(3\\cdot(-1)-1\\cdot2)\\\\&+1(3\\cdot2-(-1)\\cdot2)\\end{aligned}",
+        "D_x=7"
+      ],
+      "kind": "formula",
+      "region": "worked-example"
+    },
+    {
+      "title": "Determinante de y",
+      "text": "",
+      "tone": "green",
+      "equations": [
+        "D_y=\\begin{vmatrix}1&6&1\\\\2&3&1\\\\1&2&-1\\end{vmatrix}",
+        "D_y=\\begin{aligned}&1(3\\cdot(-1)-1\\cdot2)\\\\&-6(2\\cdot(-1)-1\\cdot1)\\\\&+1(2\\cdot2-3\\cdot1)\\end{aligned}",
+        "D_y=14"
+      ],
+      "kind": "formula",
+      "region": "worked-example"
+    },
+    {
+      "title": "Determinante de z",
+      "text": "",
+      "tone": "purple",
+      "equations": [
+        "D_z=\\begin{vmatrix}1&1&6\\\\2&-1&3\\\\1&2&2\\end{vmatrix}",
+        "D_z=\\begin{aligned}&1((-1)\\cdot2-3\\cdot2)\\\\&-1(2\\cdot2-3\\cdot1)\\\\&+6(2\\cdot2-(-1)\\cdot1)\\end{aligned}",
+        "D_z=21"
+      ],
+      "kind": "formula",
+      "region": "worked-example"
+    },
+    {
+      "title": "Aplicar las fórmulas",
+      "text": "",
+      "equations": [
+        "x=\\frac{D_x}{D}=\\frac{7}{7}=1",
+        "y=\\frac{D_y}{D}=\\frac{14}{7}=2",
+        "z=\\frac{D_z}{D}=\\frac{21}{7}=3"
+      ],
+      "kind": "steps",
+      "region": "worked-example"
+    },
+    {
+      "title": "Respuesta final",
+      "text": "",
+      "equations": [
+        "x=\\frac{7}{7}=1,\\quad y=\\frac{14}{7}=2,\\quad z=\\frac{21}{7}=3"
+      ],
+      "kind": "key-idea",
+      "region": "worked-example",
+      "icon": "check"
+    },
+    {
+      "title": "Comprobación",
+      "text": "",
+      "equations": [
+        "1\\cdot(\\frac{7}{7})+1\\cdot(\\frac{14}{7})+1\\cdot(\\frac{21}{7})=6",
+        "2\\cdot(\\frac{7}{7})-1\\cdot(\\frac{14}{7})+1\\cdot(\\frac{21}{7})=3",
+        "1\\cdot(\\frac{7}{7})+2\\cdot(\\frac{14}{7})-1\\cdot(\\frac{21}{7})=2"
+      ],
+      "kind": "comparison",
+      "region": "worked-example",
+      "icon": "check"
+    }
+  ],
+  "sources": [],
+  "diagram": "none",
+  "format": "landscape",
+  "theme": "educational",
+  "design": {
+    "preset": "mathematics-pastel",
+    "palette": {
+      "primary": "#153b78",
+      "secondary": "#3d8bd4",
+      "accent": "#ef9b2d",
+      "background": "#f7fbff",
+      "surface": "#ffffff",
+      "ink": "#183052"
+    },
+    "background": "soft-gradient",
+    "density": "medium",
+    "columns": 2,
+    "cornerStyle": "rounded"
+  }
+}

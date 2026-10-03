@@ -1,6 +1,7 @@
+import {draftFromPrompt,validateDocument,SECTION_DIAGRAMS} from '../src/studio/content.js';
 type Req={method?:string;body?:any};type Res={status:(n:number)=>Res;json:(v:any)=>void;setHeader:(k:string,v:string)=>void};
 
-const DIAGRAMS=['solids','wave','homothety','blueprint','molecule','none'];
+const DIAGRAMS=SECTION_DIAGRAMS;
 const FORMATS=['landscape','portrait','square','brochure'];
 const PRESETS=['educational-clean','mathematics-pastel','science-classroom','technical-blueprint','institutional','kids-illustrated','minimal-editorial'];
 const DEFAULT_DESIGN={preset:'educational-clean',palette:{primary:'#12365f',secondary:'#2d73b9',accent:'#f0a43a',background:'#f4f9ff',surface:'#ffffff',ink:'#193658'},background:'soft-gradient',density:'medium',columns:2,cornerStyle:'rounded'};
@@ -16,13 +17,20 @@ function normalizePlan(p:any,prompt:string,sources:any[],meta:any){
  const design=p?.design&&typeof p.design==='object'?p.design:{};
  const palette={...DEFAULT_DESIGN.palette,...(design.palette||{})};
  for(const k of Object.keys(palette))if(!/^#[0-9a-f]{6}$/i.test(String((palette as any)[k]))) (palette as any)[k]=(DEFAULT_DESIGN.palette as any)[k];
- const sections=(Array.isArray(p?.sections)?p.sections:[]).slice(0,12).map((s:any)=>({
+ const sections=(Array.isArray(p?.sections)?p.sections:[]).slice(0,24).map((s:any)=>({
    title:clean(s?.title,100)||'Sección',
    text:clean(s?.text,1600),
    ...(clean(s?.formula,500)?{formula:clean(s.formula,500)}:{}),
-   kind:['text','key-idea','formula','steps','exercise','warning','comparison'].includes(s?.kind)?s.kind:'text',
+   kind:['text','key-idea','formula','steps','exercise','warning','comparison','table'].includes(s?.kind)?s.kind:'text',
+   ...(Array.isArray(s?.equations)?{equations:s.equations.slice(0,8).map((t:any)=>clean(t,1200))}:{}),
+   ...(DIAGRAMS.includes(s?.diagram)?{diagram:s.diagram}:{}),
+   ...(['overview','worked-example','practice','footer'].includes(s?.region)?{region:s.region}:{}),
+   ...([1,2,3,4].includes(s?.span)?{span:s.span}:{}),
+   ...(['bulb','calculator','book','arrow','check','warning'].includes(s?.icon)?{icon:s.icon}:{}),
+   ...(['blue','pink','green','purple','gold'].includes(s?.tone)?{tone:s.tone}:{}),
+   ...(s?.table&&Array.isArray(s.table.headers)&&Array.isArray(s.table.rows)?{table:{headers:s.table.headers.slice(0,6).map((c:any)=>clean(c,250)),rows:s.table.rows.slice(0,20).map((r:any)=>Array.isArray(r)?r.map((c:any)=>clean(c,250)):[])}}:{}),
    ...(clean(s?.visualHint,180)?{visualHint:clean(s.visualHint,180)}:{})
- })).filter((s:any)=>s.text||s.formula);
+ })).filter((s:any)=>s.text||s.formula||s.equations?.length||s.table);
  if(!sections.length)sections.push({title:'Idea principal',text:'Edita este contenido antes de aprobarlo.',kind:'key-idea'});
  const preset=PRESETS.includes(design.preset)?design.preset:'educational-clean';
  return{
@@ -79,23 +87,24 @@ async function callProvider(provider:string,messages:any[]){
  throw new Error('Proveedor no válido');
 }
 
-const SYSTEM='Eres el arquitecto editorial de Innova Visual Studio. NO generas imágenes. Transformas una solicitud educativa y contexto investigado en un plan visual estructurado que un motor SVG determinista dibujará. Devuelve SOLO JSON. Debe ser correcto, claro, breve, editable y adaptado al tipo de material. No inventes fuentes. Las fórmulas usan LaTeX. Elige diagram solo entre solids,wave,homothety,blueprint,molecule,none. Elige format entre landscape,portrait,square,brochure. Elige design.preset entre educational-clean,mathematics-pastel,science-classroom,technical-blueprint,institutional,kids-illustrated,minimal-editorial. Secciones máximo 12. kind: text,key-idea,formula,steps,exercise,warning,comparison. Incluye colores hex, background solid|soft-gradient|grid|dots|paper, density airy|medium|compact y columns 1-4. JSON: {documentType,audience,subject,title,subtitle,diagram,format,design:{preset,palette:{primary,secondary,accent,background,surface,ink},background,density,columns,cornerStyle},sections:[{title,text,formula?,kind,visualHint?}]}.';
+const SYSTEM='Eres el arquitecto editorial de Innova Visual Studio. NO generas imágenes. Transformas una solicitud educativa y contexto investigado en un plan visual estructurado que un motor SVG determinista dibujará. Devuelve SOLO JSON. Debe ser correcto, claro, breve, editable y adaptado al tipo de material. No inventes fuentes. Las fórmulas usan LaTeX. Elige format entre landscape,portrait,square,brochure. Elige design.preset entre educational-clean,mathematics-pastel,science-classroom,technical-blueprint,institutional,kids-illustrated,minimal-editorial. Secciones máximo 24. Si piden un ejemplo resuelto, incluye sistema, cada cálculo intermedio, solución y comprobación. Usa equations (array de LaTeX) para varios pasos y matrices. Usa region overview para teoría, worked-example para ejemplo, practice para ejercicios, footer para recordatorio. Opcionales: span 1-4, icon bulb|calculator|book|arrow|check|warning, tone blue|pink|green|purple|gold, table {headers,rows}, diagram por sección. No inventes diagramas: elige solids,wave,homothety,blueprint,molecule,angle-central,angle-inscribed,angle-interior,angle-exterior,tangent,none. kind: text,key-idea,formula,steps,exercise,warning,comparison,table. Incluye colores hex, background solid|soft-gradient|grid|dots|paper, density airy|medium|compact y columns 1-4. JSON: {documentType,audience,subject,title,subtitle,diagram,format,design:{preset,palette:{primary,secondary,accent,background,surface,ink},background,density,columns,cornerStyle},sections:[{title,text,formula?,equations?,kind,visualHint?,region?,span?,icon?,tone?,table?,diagram?}]}.';
 
 async function plan(prompt:string,provider:string,research:boolean){
+ if(/cramer/i.test(prompt))return{document:draftFromPrompt(prompt),searchProvider:'Cálculo local verificable'};
  let researchData:any={context:'',sources:[]},searchProvider='none';
  if(research){try{researchData=await geminiResearch(prompt);searchProvider='Gemini Google Search'}catch{researchData=await wiki(prompt);searchProvider=researchData.sources.length?'Wikipedia fallback':'none'}}
  const messages=[{role:'system',content:SYSTEM},{role:'user',content:'SOLICITUD DEL USUARIO:\n'+prompt+'\n\nCONTEXTO INVESTIGADO (úsalo como apoyo, no lo copies mecánicamente):\n'+researchData.context.slice(0,12000)}];
  const order=provider==='auto'?['gemini','groq','openrouter']:[provider,'gemini','groq','openrouter'].filter((v,i,a)=>a.indexOf(v)===i);let last:any;
- for(const p of order){try{const out=await callProvider(p,messages);return{document:normalizePlan(jsonFromText(out.text),prompt,researchData.sources,{provider:out.provider,model:out.model,searchProvider}),searchProvider}}catch(e){last=e}}
+ for(const p of order){try{const out=await callProvider(p,messages);return{document:validateDocument(normalizePlan(jsonFromText(out.text),prompt,researchData.sources,{provider:out.provider,model:out.model,searchProvider}) as any),searchProvider}}catch(e){last=e}}
  if(researchData.context)return{document:normalizePlan({title:prompt,subtitle:'Borrador desde fuentes públicas · revisa antes de aprobar',sections:researchData.context.split(/\n\n+/).slice(0,6).map((t:string,i:number)=>({title:'Fragmento '+(i+1),text:t.slice(0,1400),kind:'text'}))},prompt,researchData.sources,{provider:'Sin IA',model:'fallback',searchProvider}),searchProvider};
  throw last||new Error('No hay proveedores IA configurados');
 }
 
 async function refineSection(doc:any,index:number,provider:string,instruction:string){
  const s=doc?.sections?.[index];if(!s)throw new Error('Sección inválida');
- const messages=[{role:'system',content:'Eres editor pedagógico. Reescribe SOLO una sección de un material educativo. Conserva exactitud y no inventes fuentes. Devuelve JSON {title,text,formula?,kind,visualHint?}.'},{role:'user',content:'Documento: '+clean(doc.title,180)+'\nSección actual: '+JSON.stringify(s)+'\nInstrucción adicional: '+clean(instruction,500)}];
+ const messages=[{role:'system',content:'Eres editor pedagógico. Reescribe SOLO una sección de un material educativo. Conserva exactitud y no inventes fuentes. Devuelve JSON {title,text,formula?,equations?,kind,visualHint?,region?,span?,icon?,tone?,table?,diagram?}.'},{role:'user',content:'Documento: '+clean(doc.title,180)+'\nSección actual: '+JSON.stringify(s)+'\nInstrucción adicional: '+clean(instruction,500)}];
  const order=provider==='auto'?['groq','gemini','openrouter']:[provider,'groq','gemini','openrouter'].filter((v,i,a)=>a.indexOf(v)===i);let last:any;
- for(const p of order){try{const out=await callProvider(p,messages),x=jsonFromText(out.text);return{section:{title:clean(x.title,100)||s.title,text:clean(x.text,1600)||s.text,...(clean(x.formula,500)?{formula:clean(x.formula,500)}:{}),kind:['text','key-idea','formula','steps','exercise','warning','comparison'].includes(x.kind)?x.kind:(s.kind||'text'),...(clean(x.visualHint,180)?{visualHint:clean(x.visualHint,180)}:{})},provider:out.provider,model:out.model}}catch(e){last=e}}
+ for(const p of order){try{const out=await callProvider(p,messages),x=jsonFromText(out.text);const normalized=normalizePlan({sections:[{...s,...x}]},doc.title,[],{});const checked=validateDocument({...doc,sections:doc.sections.map((v:any,i:number)=>i===index?{...s,...normalized.sections[0]}:v)});return{section:checked.sections[index],provider:out.provider,model:out.model}}catch(e){last=e}}
  throw last||new Error('No fue posible reescribir');
 }
 

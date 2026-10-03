@@ -1,5 +1,7 @@
-export type ContentKind='text'|'key-idea'|'formula'|'steps'|'exercise'|'warning'|'comparison';
-export type ContentSection={title:string;text:string;formula?:string;kind?:ContentKind;sourceIds?:string[];visualHint?:string;priority?:number};
+import {cramerSections} from './cramer.js';
+export const SECTION_DIAGRAMS=['solids','wave','homothety','blueprint','molecule','none','angle-central','angle-inscribed','angle-interior','angle-exterior','tangent'];
+export type ContentKind='text'|'key-idea'|'formula'|'steps'|'exercise'|'warning'|'comparison'|'table';
+export type ContentSection={title:string;text:string;formula?:string;kind?:ContentKind;sourceIds?:string[];visualHint?:string;priority?:number;equations?:string[];diagram?:string;table?:{headers:string[];rows:string[][]};image?:string;caption?:string;region?:'overview'|'worked-example'|'practice'|'footer';span?:1|2|3|4;icon?:'bulb'|'calculator'|'book'|'arrow'|'check'|'warning';tone?:'blue'|'pink'|'green'|'purple'|'gold'};
 export type Source={id?:string;title:string;url:string};
 export type Palette={primary:string;secondary:string;accent:string;background:string;surface:string;ink:string};
 export type DesignSpec={preset:string;palette:Palette;background:'solid'|'soft-gradient'|'grid'|'dots'|'paper';density:'airy'|'medium'|'compact';columns?:1|2|3|4;cornerStyle?:'soft'|'rounded'|'square'};
@@ -24,21 +26,45 @@ export const EXAMPLES:Record<string,{prompt:string;sections:ContentSection[];dia
  'Mol y masa molar':{prompt:'Mol, masa molecular y masa molar',diagram:'molecule',sections:[{title:'Mol',kind:'key-idea',text:'Unidad de cantidad de sustancia. Un mol contiene exactamente el número de Avogadro de entidades.',formula:'N_A=6{,}02214076\\times10^{23}\\;\\mathrm{mol}^{-1}'},{title:'Masa molar',kind:'formula',text:'Masa de un mol de sustancia, expresada habitualmente en g/mol.',formula:'n=\\frac{m}{M},\\quad m=nM'},{title:'Agua',text:'H₂O contiene dos átomos de hidrógeno y uno de oxígeno. Su masa molar aproximada es 18,02 g/mol.'},{title:'Practica',kind:'exercise',text:'Calcula cuántos moles hay en 36,04 g de agua. Determina la masa correspondiente a 0,5 mol de agua.'}]},
  'Folleto libre':{prompt:'Mi material educativo',diagram:'none',sections:[{title:'Idea principal',kind:'key-idea',text:'Escribe aquí el contenido que quieres comunicar.'},{title:'Conceptos clave',text:'Organiza información breve y precisa. Puedes cambiar todos estos textos.'},{title:'Aplicación',text:'Agrega ejemplos, instrucciones o datos de tu tema.'},{title:'Actividad',kind:'exercise',text:'Describe qué deben hacer tus estudiantes o lectores.'}]}
 };
+EXAMPLES['Circunferencias']={prompt:'Circunferencias: ángulos y fórmulas',diagram:'none',sections:[
+ {title:'Ángulo central',text:'El vértice está en el centro. Su medida es igual a la del arco interceptado.',formula:'\\alpha=m(\\widehat{AB})',diagram:'angle-central',kind:'formula'},
+ {title:'Ángulo inscrito',text:'El vértice está en la circunferencia. Mide la mitad del arco que intercepta.',formula:'\\alpha=\\frac{m(\\widehat{AB})}{2}',diagram:'angle-inscribed',kind:'formula'},
+ {title:'Ángulo interior',text:'Dos cuerdas se cortan dentro. Suma los arcos interceptados por el ángulo y su opuesto.',formula:'\\alpha=\\frac{m(\\widehat{AB})+m(\\widehat{CD})}{2}',diagram:'angle-interior',kind:'formula'},
+ {title:'Ángulo exterior',text:'Dos secantes se cortan fuera. Resta arco menor al mayor.',formula:'\\alpha=\\frac{m(\\widehat{AC})-m(\\widehat{BD})}{2}',diagram:'angle-exterior',kind:'formula'},
+ {title:'Radio y tangente',text:'El radio que llega al punto de tangencia es perpendicular a la tangente.',formula:'OT\\perp t,\\quad \\alpha=90^\\circ',diagram:'tangent',kind:'formula'},
+ {title:'Longitud de arco',text:'La fórmula usa el ángulo central en grados y el radio de la circunferencia.',formula:'L=\\frac{\\theta}{360^\\circ}\\,2\\pi r',kind:'formula'},
+ {title:'Secantes',text:'Desde un punto exterior P: producto de segmento externo y secante completa.',formula:'PA\\cdot PB=PC\\cdot PD',kind:'formula'},
+ {title:'Tangente y secante',text:'PT es tangente; PA es la parte externa y PB la secante completa.',formula:'PT^2=PA\\cdot PB',kind:'formula'}
+]};
+EXAMPLES['Método de Cramer']={prompt:'Método de Cramer con ejemplo resuelto 2x+y=5; x-y=1, horizontal estilo Canva y LaTeX',sections:cramerSections(''),diagram:'none'};
 
 function presetForPrompt(p:string){if(/plano|arquitect|tarima|blueprint/.test(p))return 'technical-blueprint';if(/qu[ií]mica|mol|ciencia|biolog/.test(p))return 'science-classroom';if(/matem|cramer|homotec|seno|coseno|circun/.test(p))return 'mathematics-pastel';return 'educational-clean'}
 
 export function draftFromPrompt(prompt:string):VisualDocument{
- const p=prompt.toLowerCase();const key=/cono|cilindro/.test(p)?'Cono y cilindro':/seno|coseno|onda/.test(p)?'Seno y coseno':/homotec/.test(p)?'Homotecia':/plano|sala|tarima/.test(p)?'Plano sala':/mol|química|quimica/.test(p)?'Mol y masa molar':'Folleto libre';const example=EXAMPLES[key];const preset=presetForPrompt(p);const design=structuredClone(DESIGN_PRESETS[preset]);
- return{version:2,documentType:'infographic',title:prompt.trim().slice(0,180)||example.prompt,subtitle:'Material educativo · Contenido editable',sections:structuredClone(example.sections),sources:[],diagram:example.diagram,format:'landscape',theme:design.preset==='technical-blueprint'?'blueprint':'educational',design};
+ const p=prompt.toLowerCase();const key=/circunferen/.test(p)?'Circunferencias':/cono|cilindro/.test(p)?'Cono y cilindro':/seno|coseno|onda/.test(p)?'Seno y coseno':/homotec/.test(p)?'Homotecia':/plano|sala|tarima/.test(p)?'Plano sala':/mol|química|quimica/.test(p)?'Mol y masa molar':'Folleto libre';const example=EXAMPLES[key];const preset=presetForPrompt(p);const design=structuredClone(DESIGN_PRESETS[preset]);if(key==='Circunferencias')design.columns=4;
+ if(/cramer/.test(p)){return {version:2,documentType:/gu[ií]a/.test(p)?'worksheet':'infographic',title:'Método de Cramer',subtitle:'Resolución de sistemas de ecuaciones lineales · Paso a paso',sections:cramerSections(prompt),sources:[],diagram:'none',format:/vertical/.test(p)?'portrait':'landscape',theme:'educational',design};}
+ return{version:2,documentType:/folleto/.test(p)?'brochure':/afiche|p[oó]ster/.test(p)?'poster':/plano/.test(p)?'technical-plan':/gu[ií]a/.test(p)?'worksheet':/actividad/.test(p)?'activity':'infographic',title:prompt.trim().slice(0,180)||example.prompt,subtitle:'Material educativo · Contenido editable',sections:structuredClone(example.sections),sources:[],diagram:example.diagram,format:'landscape',theme:design.preset==='technical-blueprint'?'blueprint':'educational',design};
 }
 const validColor=(v:unknown)=>typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v);
 export function validateDocument(value:unknown):VisualDocument{
- const d=value as VisualDocument;if(!d||![1,2].includes(d.version)||typeof d.title!=='string'||!Array.isArray(d.sections)||d.sections.length>12)throw new Error('Documento inválido (máximo 12 secciones)');
+ const d=value as VisualDocument;if(!d||![1,2].includes(d.version)||typeof d.title!=='string'||!Array.isArray(d.sections)||d.sections.length>24)throw new Error('Documento inválido (máximo 24 secciones)');
  if(d.title.length>180||typeof d.subtitle!=='string'||d.subtitle.length>250)throw new Error('Título o subtítulo demasiado largo');
- if(!['solids','wave','homothety','blueprint','molecule','none'].includes(d.diagram)||!['landscape','portrait','square','brochure'].includes(d.format)||!['educational','editorial','blueprint'].includes(d.theme))throw new Error('Formato o diagrama inválido');
- for(const s of d.sections)if(typeof s.title!=='string'||s.title.length>100||typeof s.text!=='string'||s.text.length>1600||(s.formula!==undefined&&(typeof s.formula!=='string'||s.formula.length>500))||(s.kind!==undefined&&!['text','key-idea','formula','steps','exercise','warning','comparison'].includes(s.kind)))throw new Error('Sección inválida');
+ if(!SECTION_DIAGRAMS.includes(d.diagram)||!['landscape','portrait','square','brochure'].includes(d.format)||!['educational','editorial','blueprint'].includes(d.theme))throw new Error('Formato o diagrama inválido');
+ for(const s of d.sections)if(typeof s.title!=='string'||s.title.length>100||typeof s.text!=='string'||s.text.length>1600||(s.formula!==undefined&&(typeof s.formula!=='string'||s.formula.length>500))||(s.kind!==undefined&&!['text','key-idea','formula','steps','exercise','warning','comparison','table'].includes(s.kind)))throw new Error('Sección inválida');
+ for(const s of d.sections){
+  if(s.equations&&(!Array.isArray(s.equations)||s.equations.length>8||s.equations.some(t=>typeof t!=='string'||t.length>1200)))throw new Error('Ecuaciones inválidas');
+  if(s.diagram&&!SECTION_DIAGRAMS.includes(s.diagram))throw new Error('Diagrama de sección inválido');
+  if(s.region&&!['overview','worked-example','practice','footer'].includes(s.region))throw new Error('Región inválida');
+  if(s.span!==undefined&&![1,2,3,4].includes(s.span))throw new Error('Ancho de tarjeta inválido');
+  if(s.icon&&!['bulb','calculator','book','arrow','check','warning'].includes(s.icon))throw new Error('Icono inválido');
+  if(s.tone&&!['blue','pink','green','purple','gold'].includes(s.tone))throw new Error('Tono inválido');
+  if(s.caption!==undefined&&(typeof s.caption!=='string'||s.caption.length>250))throw new Error('Pie de imagen inválido');
+  if(s.image&&!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=\s]+$/.test(s.image))throw new Error('Imagen de sección inválida');
+  if(s.table){const t=s.table;if(!Array.isArray(t.headers)||t.headers.length<1||t.headers.length>6||!Array.isArray(t.rows)||t.rows.length>20||t.rows.some(r=>!Array.isArray(r)||r.length!==t.headers.length)||[...t.headers,...t.rows.flat()].some(v=>typeof v!=='string'||v.length>250))throw new Error('Tabla inválida');}
+ }
+ if(d.documentType&&!['infographic','poster','worksheet','guide','brochure','technical-plan','activity'].includes(d.documentType))throw new Error('Tipo de documento inválido');
  if(!Array.isArray(d.sources)||d.sources.length>12||d.sources.some(s=>typeof s.title!=='string'||s.title.length>250||typeof s.url!=='string'||!/^https:\/\//.test(s.url)||s.url.length>1500))throw new Error('Fuente inválida');
- if(d.design){const x=d.design;if(typeof x.preset!=='string'||!['solid','soft-gradient','grid','dots','paper'].includes(x.background)||!['airy','medium','compact'].includes(x.density)||!Object.values(x.palette).every(validColor))throw new Error('Diseño inválido');if(x.columns!==undefined&&![1,2,3,4].includes(x.columns))throw new Error('Columnas inválidas');}
+ if(d.design){const x=d.design;if(typeof x.preset!=='string'||!['solid','soft-gradient','grid','dots','paper'].includes(x.background)||!['airy','medium','compact'].includes(x.density)||!x.palette||!['primary','secondary','accent','background','surface','ink'].every(k=>validColor(x.palette[k as keyof Palette])))throw new Error('Diseño inválido');if(x.cornerStyle&&!['soft','rounded','square'].includes(x.cornerStyle))throw new Error('Esquinas inválidas');if(x.columns!==undefined&&![1,2,3,4].includes(x.columns))throw new Error('Columnas inválidas');}
  if(d.points&&(!Array.isArray(d.points)||d.points.length<2||d.points.length>2000||d.points.some(p=>!Number.isFinite(p.x)||!Number.isFinite(p.y))))throw new Error('Datos de gráfico inválidos');
- if(d.photo&&!/^data:image\/(png|jpeg|webp);base64,/.test(d.photo))throw new Error('Fotografía inválida');return structuredClone(d);
+ if(d.photo&&!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=\s]+$/.test(d.photo))throw new Error('Fotografía inválida');return structuredClone(d);
 }

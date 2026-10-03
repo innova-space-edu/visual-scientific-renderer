@@ -1,0 +1,80 @@
+{
+  "version": 2,
+  "documentType": "infographic",
+  "title": "Circunferencias ángulos y fórmulas",
+  "subtitle": "Material educativo · Contenido editable",
+  "sections": [
+    {
+      "title": "Ángulo central",
+      "text": "El vértice está en el centro. Su medida es igual a la del arco interceptado.",
+      "formula": "\\alpha=m(\\widehat{AB})",
+      "diagram": "angle-central",
+      "kind": "formula"
+    },
+    {
+      "title": "Ángulo inscrito",
+      "text": "El vértice está en la circunferencia. Mide la mitad del arco que intercepta.",
+      "formula": "\\alpha=\\frac{m(\\widehat{AB})}{2}",
+      "diagram": "angle-inscribed",
+      "kind": "formula"
+    },
+    {
+      "title": "Ángulo interior",
+      "text": "Dos cuerdas se cortan dentro. Suma los arcos interceptados por el ángulo y su opuesto.",
+      "formula": "\\alpha=\\frac{m(\\widehat{AB})+m(\\widehat{CD})}{2}",
+      "diagram": "angle-interior",
+      "kind": "formula"
+    },
+    {
+      "title": "Ángulo exterior",
+      "text": "Dos secantes se cortan fuera. Resta arco menor al mayor.",
+      "formula": "\\alpha=\\frac{m(\\widehat{AC})-m(\\widehat{BD})}{2}",
+      "diagram": "angle-exterior",
+      "kind": "formula"
+    },
+    {
+      "title": "Radio y tangente",
+      "text": "El radio que llega al punto de tangencia es perpendicular a la tangente.",
+      "formula": "OT\\perp t,\\quad \\alpha=90^\\circ",
+      "diagram": "tangent",
+      "kind": "formula"
+    },
+    {
+      "title": "Longitud de arco",
+      "text": "La fórmula usa el ángulo central en grados y el radio de la circunferencia.",
+      "formula": "L=\\frac{\\theta}{360^\\circ}\\,2\\pi r",
+      "kind": "formula"
+    },
+    {
+      "title": "Secantes",
+      "text": "Desde un punto exterior P: producto de segmento externo y secante completa.",
+      "formula": "PA\\cdot PB=PC\\cdot PD",
+      "kind": "formula"
+    },
+    {
+      "title": "Tangente y secante",
+      "text": "PT es tangente; PA es la parte externa y PB la secante completa.",
+      "formula": "PT^2=PA\\cdot PB",
+      "kind": "formula"
+    }
+  ],
+  "sources": [],
+  "diagram": "none",
+  "format": "landscape",
+  "theme": "educational",
+  "design": {
+    "preset": "mathematics-pastel",
+    "palette": {
+      "primary": "#153b78",
+      "secondary": "#3d8bd4",
+      "accent": "#ef9b2d",
+      "background": "#f7fbff",
+      "surface": "#ffffff",
+      "ink": "#183052"
+    },
+    "background": "soft-gradient",
+    "density": "medium",
+    "columns": 4,
+    "cornerStyle": "rounded"
+  }
+}

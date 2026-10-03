@@ -1,0 +1,1 @@
+{"extends":"./tsconfig.json","compilerOptions":{"noEmit":false,"rootDir":".","outDir":".test-dist"},"include":["api/**/*.ts","src/studio/content.ts","src/studio/cramer.ts"],"exclude":[]}

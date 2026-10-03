@@ -1,4 +1,4 @@
-import {draftFromPrompt,EXAMPLES,validateDocument,DESIGN_PRESETS,type VisualDocument,type ContentKind} from './content.js';
+import {draftFromPrompt,EXAMPLES,validateDocument,DESIGN_PRESETS,type VisualDocument,type ContentKind,SECTION_DIAGRAMS} from './content.js';
 import {composeSVG} from './composer.js';
 import {PyodideWorkerClient} from '../python/pyodide-worker.js';
 
@@ -6,8 +6,8 @@ const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 let doc=draftFromPrompt('Área y volumen del cono y cilindro'),approved='',rendered:ReturnType<typeof composeSVG>|null=null,python:PyodideWorkerClient|null=null,pythonTimer:ReturnType<typeof setTimeout>|null=null;
 const say=(s:string)=>$('design-status').textContent=s;
 
-function signature(){return JSON.stringify({title:doc.title,subtitle:doc.subtitle,sections:doc.sections,sources:doc.sources,design:doc.design,documentType:doc.documentType,audience:doc.audience})}
-function dirty(){approved='';$('approval-state').textContent='Contenido o diseño modificado · revisa y aprueba nuevamente';}
+function signature(){return JSON.stringify(doc)}
+function dirty(){approved='';rendered=null;$('design-preview').replaceChildren();$('approval-state').textContent='Contenido o diseño modificado · revisa y aprueba nuevamente';}
 
 function sync(){
  doc.title=$<HTMLInputElement>('doc-title').value;
@@ -53,7 +53,7 @@ function fill(){
   const box=document.createElement('div');box.className='content-section';
   const kindLabel=document.createElement('label');kindLabel.textContent='Tipo de bloque';
   const kind=document.createElement('select');
-  for(const v of ['text','key-idea','formula','steps','exercise','warning','comparison'])kind.add(new Option(v,v));
+  for(const v of ['text','key-idea','formula','steps','exercise','warning','comparison','table'])kind.add(new Option(v,v));
   kind.value=s.kind||'text';kind.addEventListener('change',()=>{s.kind=kind.value as ContentKind;dirty()});box.append(kindLabel,kind);
   for(const key of ['title','text','formula'] as const){
    const label=document.createElement('label'),id=`section-${index}-${key}`;
@@ -63,6 +63,19 @@ function fill(){
    if(input instanceof HTMLTextAreaElement)input.rows=key==='text'?4:2;
    input.addEventListener('input',()=>{s[key]=input.value;dirty()});box.append(label,input);
   }
+  const region=document.createElement('select');
+  for(const [v,label] of [['','Región automática'],['overview','Explicación'],['worked-example','Ejemplo resuelto'],['practice','Práctica'],['footer','Franja inferior']])region.add(new Option(label,v));
+  region.value=s.region||'';region.setAttribute('aria-label','Región de la sección '+(index+1));region.addEventListener('change',()=>{s.region=region.value?region.value as typeof s.region:undefined;dirty()});box.append(region);
+  const diagram=document.createElement('select');for(const v of SECTION_DIAGRAMS)diagram.add(new Option(v,v));diagram.value=s.diagram||'none';diagram.setAttribute('aria-label','Diagrama de la sección '+(index+1));diagram.addEventListener('change',()=>{s.diagram=diagram.value;dirty()});box.append(diagram);
+  const equations=document.createElement('textarea');equations.rows=4;equations.placeholder='Ecuaciones LaTeX: una por línea';equations.setAttribute('aria-label','Ecuaciones de la sección '+(index+1));equations.value=(s.equations||[]).join('\n');equations.addEventListener('input',()=>{s.equations=equations.value.split('\n').filter(v=>v.trim());dirty()});box.append(equations);
+  const table=document.createElement('textarea');table.rows=3;table.placeholder='Tabla: columnas separadas por |. Primera línea: encabezados.';table.setAttribute('aria-label','Tabla de la sección '+(index+1));table.value=s.table?[s.table.headers,...s.table.rows].map(r=>r.join(' | ')).join('\n'):'';table.addEventListener('input',()=>{const rows=table.value.split('\n').filter(v=>v.trim()).map(v=>v.split('|').map(c=>c.trim()));s.table=rows.length?{headers:rows[0],rows:rows.slice(1)}:undefined;dirty()});box.append(table);
+  const settings=document.createElement('div');settings.className='mini-grid';
+  const span=document.createElement('select');for(const v of [1,2,3,4])span.add(new Option('Ancho: '+v+' columna(s)',String(v)));span.value=String(s.span||1);span.setAttribute('aria-label','Ancho de la sección '+(index+1));span.addEventListener('change',()=>{s.span=Number(span.value) as typeof s.span;dirty()});
+  const tone=document.createElement('select');for(const [v,label] of [['','Color automático'],['blue','Azul'],['pink','Rosa'],['green','Verde'],['purple','Lila'],['gold','Dorado']])tone.add(new Option(label,v));tone.value=s.tone||'';tone.setAttribute('aria-label','Color de la sección '+(index+1));tone.addEventListener('change',()=>{s.tone=tone.value? tone.value as typeof s.tone:undefined;dirty()});settings.append(span,tone);box.append(settings);
+  const photo=document.createElement('input');photo.type='file';photo.accept='image/png,image/jpeg,image/webp';photo.setAttribute('aria-label','Imagen de la sección '+(index+1));photo.addEventListener('change',()=>{const file=photo.files?.[0];if(!file)return;if(file.size>10000000||!['image/png','image/jpeg','image/webp'].includes(file.type)){say('Usa una imagen de hasta 10 MB');return}const reader=new FileReader();reader.onload=()=>{s.image=String(reader.result);dirty();fill()};reader.readAsDataURL(file)});box.append(photo);
+  if(s.image){const removeImage=document.createElement('button');removeImage.textContent='Quitar imagen de sección';removeImage.addEventListener('click',()=>{delete s.image;dirty();fill()});box.append(removeImage);}
+  const move=document.createElement('div');move.className='section-actions';
+  for(const [offset,label] of [[-1,'Subir'],[1,'Bajar']] as const){const b=document.createElement('button');b.textContent=label;b.disabled=index+offset<0||index+offset>=doc.sections.length;b.addEventListener('click',()=>{[doc.sections[index],doc.sections[index+offset]]=[doc.sections[index+offset],doc.sections[index]];dirty();fill()});move.append(b);}box.append(move);
   const actions=document.createElement('div');actions.className='section-actions';
   const ai=document.createElement('button');ai.textContent='Reescribir esta sección con IA';ai.addEventListener('click',()=>refineSection(index,ai));
   const remove=document.createElement('button');remove.textContent='Eliminar';remove.addEventListener('click',()=>{doc.sections.splice(index,1);dirty();fill()});
@@ -111,7 +124,7 @@ async function bitmap(kind:'png'|'jpeg'){
 }
 
 $('ai-plan').addEventListener('click',createAIPlan);
-$('draft').addEventListener('click',()=>{doc=draftFromPrompt($<HTMLTextAreaElement>('design-prompt').value);dirty();fill();say('Borrador local preparado. Puedes editarlo o usar IA para investigar.')});
+$('draft').addEventListener('click',()=>{try{doc=draftFromPrompt($<HTMLTextAreaElement>('design-prompt').value);dirty();fill();say('Borrador local preparado. Puedes editarlo o usar IA para investigar.')}catch(e){say(String(e))}});
 const example=$<HTMLSelectElement>('example');Object.keys(EXAMPLES).forEach(name=>example.add(new Option(name,name)));
 example.addEventListener('change',()=>{const e=EXAMPLES[example.value];$<HTMLTextAreaElement>('design-prompt').value=e.prompt;doc=draftFromPrompt(e.prompt);dirty();fill()});
 
@@ -123,10 +136,10 @@ $('design-preset').addEventListener('change',()=>{
 });
 for(const id of ['color-primary','color-secondary','color-accent','color-background'])$(id).addEventListener('input',()=>{sync();dirty()});
 
-$('add-section').addEventListener('click',()=>{if(doc.sections.length>=12){say('Máximo 12 secciones');return}sync();doc.sections.push({title:'Nueva sección',text:'',formula:'',kind:'text'});dirty();fill()});
+$('add-section').addEventListener('click',()=>{if(doc.sections.length>=24){say('Máximo 24 secciones');return}sync();doc.sections.push({title:'Nueva sección',text:'',formula:'',kind:'text'});dirty();fill()});
 $('approve').addEventListener('click',()=>{try{sync();validateDocument(doc);approved=signature();$('approval-state').textContent='Contenido y diseño aprobados · listo para componer';say('Snapshot aprobado. Ya puedes generar distintos formatos con el motor.')}catch(e){say(String(e))}});
 $('compose').addEventListener('click',render);
-for(const id of ['doc-format','doc-theme','doc-diagram'])$(id).addEventListener('change',()=>{if(id==='doc-diagram')delete doc.points;sync();if(approved===signature())render()});
+for(const id of ['doc-format','doc-theme','doc-diagram'])$(id).addEventListener('change',()=>{if(id==='doc-diagram')delete doc.points;sync();dirty()});
 
 $('save-png').addEventListener('click',()=>bitmap('png'));$('save-jpg').addEventListener('click',()=>bitmap('jpeg'));
 $('save-svg').addEventListener('click',()=>{if(rendered)download(new Blob([rendered.svg],{type:'image/svg+xml'}),'visual-studio.svg');else say('Primero genera el material')});
@@ -135,11 +148,11 @@ $('save-project').addEventListener('click',()=>{try{sync();validateDocument(doc)
 $('load-project').addEventListener('click',()=>$('project-file').click());
 
 $<HTMLInputElement>('project-file').addEventListener('change',async e=>{const input=e.currentTarget as HTMLInputElement;try{const file=input.files?.[0];if(!file)return;if(file.size>16000000)throw new Error('Proyecto demasiado grande');doc=validateDocument(JSON.parse(await file.text()));dirty();fill();say('Proyecto cargado. Revisa y aprueba.')}catch(e){say('No se pudo abrir: '+String(e))}finally{input.value=''}});
-$<HTMLInputElement>('photo').addEventListener('change',async e=>{try{const file=(e.currentTarget as HTMLInputElement).files?.[0];if(!file)return;if(file.size>10000000||!['image/png','image/jpeg','image/webp'].includes(file.type))throw new Error('Usa PNG, JPG o WebP de hasta 10 MB');doc.photo=await new Promise<string>((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result));r.onerror=no;r.readAsDataURL(file)});$('remove-photo').hidden=false;if(approved===signature())render();say('Fotografía incorporada localmente.')}catch(e){say(String(e))}});
-$('remove-photo').addEventListener('click',()=>{delete doc.photo;$<HTMLInputElement>('photo').value='';$('remove-photo').hidden=true;if(approved===signature())render()});
+$<HTMLInputElement>('photo').addEventListener('change',async e=>{try{const file=(e.currentTarget as HTMLInputElement).files?.[0];if(!file)return;if(file.size>10000000||!['image/png','image/jpeg','image/webp'].includes(file.type))throw new Error('Usa PNG, JPG o WebP de hasta 10 MB');doc.photo=await new Promise<string>((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result));r.onerror=no;r.readAsDataURL(file)});$('remove-photo').hidden=false;dirty();say('Fotografía incorporada localmente.')}catch(e){say(String(e))}});
+$('remove-photo').addEventListener('click',()=>{delete doc.photo;$<HTMLInputElement>('photo').value='';$('remove-photo').hidden=true;dirty()});
 
 $('use-3d').addEventListener('click',()=>{$('mode-3d').click();say('Crea la escena y pulsa Usar escena en diseño.')});
-document.addEventListener('captured-3d',((e:CustomEvent<string>)=>{doc.photo=e.detail;$('remove-photo').hidden=false;if(approved===signature())render();say('Captura 3D incorporada.');$('mode-2d').click()}) as EventListener);
+document.addEventListener('captured-3d',((e:CustomEvent<string>)=>{doc.photo=e.detail;$('remove-photo').hidden=false;dirty();say('Captura 3D incorporada.');$('mode-2d').click()}) as EventListener);
 
 $('research').addEventListener('click',async()=>{
  const b=$<HTMLButtonElement>('research');b.disabled=true;say('Buscando extractos y fuentes…');
@@ -151,7 +164,7 @@ $('research').addEventListener('click',async()=>{
 });
 
 function stopPython(message:string){python?.terminate();python=null;if(pythonTimer)clearTimeout(pythonTimer);pythonTimer=null;$<HTMLButtonElement>('run-python').disabled=false;$('cancel-python').hidden=true;$('python-output').textContent=message}
-$('plot-python').addEventListener('click',()=>{try{const points=JSON.parse($('python-output').textContent??'');validateDocument({...doc,points});doc.points=points;doc.diagram='none';fill();if(approved===signature())render();say('Datos Python incorporados.')}catch(e){say('Devuelve lista JSON {x,y}: '+String(e))}});
+$('plot-python').addEventListener('click',()=>{try{const points=JSON.parse($('python-output').textContent??'');validateDocument({...doc,points});doc.points=points;doc.diagram='none';fill();dirty();say('Datos Python incorporados.')}catch(e){say('Devuelve lista JSON {x,y}: '+String(e))}});
 $('cancel-python').addEventListener('click',()=>stopPython('Cálculo cancelado'));
 $('run-python').addEventListener('click',async()=>{const b=$<HTMLButtonElement>('run-python');b.disabled=true;$('cancel-python').hidden=false;$('python-output').textContent='Iniciando Python local…';try{python=new PyodideWorkerClient();const current=python;pythonTimer=setTimeout(()=>stopPython('Se agotó el tiempo (60 s).'),60000);const result=await current.run($<HTMLTextAreaElement>('python-code').value);if(current!==python)return;stopPython(typeof result==='string'?result:JSON.stringify(result,null,2))}catch(e){stopPython('Python no disponible: '+String(e))}});
 

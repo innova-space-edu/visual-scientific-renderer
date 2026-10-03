@@ -5,3 +5,5 @@ public/vendor/
 .vercel/
 .env*
 artifacts/
+
+.test-dist/

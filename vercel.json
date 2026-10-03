@@ -1,1 +1,11 @@
-{"buildCommand":"npm run build","outputDirectory":"site-dist","framework":"vite"}
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "site-dist",
+  "framework": "vite",
+  "git": {
+    "deploymentEnabled": {
+      "feat/scientific-renderer-v1": false,
+      "main": true
+    }
+  }
+}
