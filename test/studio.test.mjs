@@ -27,3 +27,7 @@ test('Python blob worker receives an absolute runtime URL in every request',asyn
  globalThis.location={href:'https://studio.example/app/'};globalThis.Worker=class{postMessage(value){posted=value;this.onmessage({data:{id:value.id,ok:true,result:2}})}terminate(){}};
  try{const client=new PyodideWorkerClient();assert.equal(await client.run('1+1'),2);assert.equal(posted.indexURL,'https://studio.example/vendor/pyodide/');client.terminate();}finally{globalThis.Worker=previousWorker;globalThis.location=previousLocation}
 });
+
+test('VisualDocument v2 validates semantic design and composer uses palette/background',()=>{
+ const doc=draftFromPrompt('homotecia para 1 medio');assert.equal(doc.version,2);assert.ok(doc.design);doc.design.background='grid';doc.design.columns=3;doc.design.palette.primary='#112233';const checked=validateDocument(doc);const out=composeSVG(checked);assert.ok(out.svg.includes('#112233'));assert.ok(out.svg.includes('bg-grid'));assert.throws(()=>validateDocument({...doc,design:{...doc.design,palette:{...doc.design.palette,accent:'red'}}}));
+});
