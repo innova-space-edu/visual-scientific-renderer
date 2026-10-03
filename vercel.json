@@ -5,7 +5,8 @@
   "git": {
     "deploymentEnabled": {
       "feat/scientific-renderer-v1": false,
-      "main": true
+      "main": true,
+      "feat/prompt-only-studio": false
     }
   }
 }

@@ -23,10 +23,12 @@ npm run check
 npm run dev
 ```
 
-## Quality preview / final images
+## Prompt-only Visual Studio
 
-The review UI now includes a materials laboratory, orbit/pan/zoom controls, progressive GPU path tracing, local GLB import and actual-resolution PNG export up to 4K. Rendering uses geometry, conventional materials and mathematical sampling; no generative image service is involved.
+The web app now turns one natural-language request into a finished image: intent → research → selected design/physics skills → structured editorial content → independent adherence check → SVG/Canvas output. Templates, audience and orientation are inferred. Users download PNG, JPG, SVG or PDF without editing or approving intermediate content.
 
-Read [the quality workflow and scientific limits](docs/RENDER_QUALITY.md) before interpreting the educational scenes as physical datasets. Blender/Cycles is a separate optional worker, not a Vercel runtime dependency.
+Cramer is calculated locally. The standard Solar System overview uses attributed NASA facts and vector illustrations. Other topics require a server text provider; optional Gemini image artwork complements exact SVG text. Scientific simulation and 3D modules remain library capabilities.
 
-Dependencies are locked. Use `npm ci` and `npm run check`. Commit the complete validated change once to the existing PR, then create one final preview deployment.
+Read [the automatic workflow and Vercel configuration](docs/VISUAL_STUDIO.md), [upstream skill provenance](docs/SKILLS.md), and [scientific rendering limits](docs/RENDER_QUALITY.md).
+
+Dependencies are locked. Use `npm ci` and `npm run check` before publishing. Working-branch deployments are disabled in `vercel.json`; merging the validated PR triggers the single final production deploy.
