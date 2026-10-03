@@ -62,37 +62,37 @@ async function wiki(topic:string){
 }
 
 async function geminiResearch(prompt:string){
- const key=(process.env.GEMINI_API_KEY||process.env.GOOGLE_API_KEY);if(!key)throw new Error('GEMINI_API_KEY no configurada');
+ const key=(process.env.GEMINI_API_KEY||process.env.GOOGLE_API_KEY)?.trim();if(!key)throw new Error('GEMINI_API_KEY no configurada');
  const model=process.env.GEMINI_TEXT_MODEL_PRIMARY||'gemini-2.5-flash';
  const body={contents:[{role:'user',parts:[{text:'Investiga para crear material educativo en español de Chile. Prioriza fuentes confiables, conceptos correctos, fórmulas si corresponden, ejemplos y datos útiles. Solicitud: '+prompt}]}],tools:[{google_search:{}}],generationConfig:{temperature:0.2,maxOutputTokens:3500}};
- const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+encodeURIComponent(key),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(16000)});
+ const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify(body),signal:AbortSignal.timeout(16000)});
  if(!r.ok)throw new Error('Gemini Search '+r.status);
  const d=await r.json(),c=d.candidates?.[0]||{},text=(c.content?.parts||[]).map((p:any)=>p.text||'').join('\n'),chunks=c.groundingMetadata?.groundingChunks||[];
  const sources:any[]=[];for(const ch of chunks){const w=ch?.web;if(w?.uri&&!sources.some(s=>s.url===w.uri))sources.push({id:'src-'+(sources.length+1),title:clean(w.title||w.uri,250),url:w.uri})}
  return{context:text,sources:sources.slice(0,12),model};
 }
 
-async function callProvider(provider:string,messages:any[]){
+async function callProvider(provider:string,messages:any[],maxTokens=5000){
  if(provider==='cerebras'){
  const key=process.env.CEREBRAS_API_KEY;if(!key)throw new Error('Cerebras no configurado');const model=process.env.CEREBRAS_TEXT_MODEL||'llama-3.3-70b';
- const r=await fetch('https://api.cerebras.ai/v1/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({model,messages,temperature:.2,max_tokens:5000,response_format:{type:'json_object'}}),signal:AbortSignal.timeout(16000)});
+ const r=await fetch('https://api.cerebras.ai/v1/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({model,messages,temperature:.2,max_tokens:maxTokens,response_format:{type:'json_object'}}),signal:AbortSignal.timeout(16000)});
  if(!r.ok)throw new Error('Cerebras '+r.status);const d=await r.json();return{text:d.choices?.[0]?.message?.content||'',provider:'Cerebras',model};
  }
 
  if(provider==='gemini'){
-  const key=(process.env.GEMINI_API_KEY||process.env.GOOGLE_API_KEY);if(!key)throw new Error('Gemini no configurado');
+  const key=(process.env.GEMINI_API_KEY||process.env.GOOGLE_API_KEY)?.trim();if(!key)throw new Error('Gemini no configurado');
   const model=process.env.GEMINI_TEXT_MODEL_PRIMARY||'gemini-2.5-flash',system=messages.find(m=>m.role==='system')?.content||'',contents=messages.filter(m=>m.role!=='system').map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}));
-  const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent?key='+encodeURIComponent(key),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents,generationConfig:{temperature:.25,maxOutputTokens:5000,responseMimeType:'application/json'}}),signal:AbortSignal.timeout(16000)});
+  const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents,generationConfig:{temperature:.25,maxOutputTokens:maxTokens,responseMimeType:'application/json',...(model.startsWith('gemini-2.5-flash')?{thinkingConfig:{thinkingBudget:0}}:{})}}),signal:AbortSignal.timeout(16000)});
   if(!r.ok)throw new Error('Gemini '+r.status);const d=await r.json();return{text:(d.candidates?.[0]?.content?.parts||[]).map((p:any)=>p.text||'').join(''),provider:'Gemini',model};
  }
  if(provider==='groq'){
   const key=process.env.GROQ_API_KEY;if(!key)throw new Error('Groq no configurado');const model=process.env.GROQ_TEXT_MODEL||'llama-3.3-70b-versatile';
-  const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({model,messages,temperature:.25,max_tokens:5000,response_format:{type:'json_object'}}),signal:AbortSignal.timeout(16000)});
+  const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({model,messages,temperature:.25,max_tokens:maxTokens,response_format:{type:'json_object'}}),signal:AbortSignal.timeout(16000)});
   if(!r.ok)throw new Error('Groq '+r.status);const d=await r.json();return{text:d.choices?.[0]?.message?.content||'',provider:'Groq',model};
  }
  if(provider==='openrouter'){
   const key=process.env.OPENROUTER_API_KEY;if(!key)throw new Error('OpenRouter no configurado');const model=process.env.OPENROUTER_TEXT_MODEL||'openai/gpt-4o-mini';
-  const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json','HTTP-Referer':process.env.PUBLIC_APP_URL||'https://visual-scientific-renderer.vercel.app','X-Title':'Innova Visual Studio'},body:JSON.stringify({model,messages,temperature:.25,max_tokens:5000,response_format:{type:'json_object'}}),signal:AbortSignal.timeout(16000)});
+  const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json','HTTP-Referer':process.env.PUBLIC_APP_URL||'https://visual-scientific-renderer.vercel.app','X-Title':'Innova Visual Studio'},body:JSON.stringify({model,messages,temperature:.25,max_tokens:maxTokens,response_format:{type:'json_object'}}),signal:AbortSignal.timeout(16000)});
   if(!r.ok)throw new Error('OpenRouter '+r.status);const d=await r.json();return{text:d.choices?.[0]?.message?.content||'',provider:'OpenRouter',model};
  }
  throw new Error('Proveedor no válido');
@@ -101,13 +101,19 @@ async function callProvider(provider:string,messages:any[]){
 const SCHEMA='Devuelve SOLO JSON {title,subtitle,subject,diagram,sections:[{title,text,formula?,equations?,kind,region?,span?,icon?,tone?,table?,diagram?,visual?}],illustrationPrompt?}. Máximo 24 secciones. kind: text,key-idea,formula,steps,exercise,warning,comparison,table. region: overview,worked-example,practice,footer. span 1-4. icon: bulb,calculator,book,arrow,check,warning. tone: blue,pink,green,purple,gold. table {headers,rows}. Fórmulas en LaTeX, sin delimitadores $ ni Markdown. equations hasta 8 por bloque. Diagramas disponibles: '+DIAGRAMS.join(',')+'. visual {type:flow|cycle,labels:string[]} permite diagramas con 2 a 6 conceptos exactos y flechas, sin coordenadas; úsalo para procesos o ciclos. Usa none si no hay uno adecuado; no escojas otro tema para llenar el espacio. No devuelvas HTML, SVG, coordenadas ni fuentes inventadas.';
 const selectedSkills=(b:Brief)=>['visual-design-router','educational-image',b.documentType==='poster'?'poster-design':b.documentType==='technical-plan'?'technical-drawing':['worksheet','activity'].includes(b.documentType)?'worksheet-design':b.documentType==='guide'?'textbook-page':'infographic',...(b.domain==='math'?['math-diagram']:b.domain==='physics'?['physics-diagram','science-illustration','physics-model-router','physics-validator']:b.domain==='science'?['science-illustration']:[]),'visual-quality-control'];
 const instructions=(names:string[])=>SKILLS.filter(s=>names.includes(s.name)).map(s=>s.instructions).join('\n\n');
-const configured=()=>['gemini','groq','openrouter','cerebras'].filter(p=>p==='gemini'?!!(process.env.GEMINI_API_KEY||process.env.GOOGLE_API_KEY):!!process.env[p.toUpperCase()+'_API_KEY']);
+const configured=()=>['gemini','groq','openrouter','cerebras'].filter(p=>p==='gemini'?!!(process.env.GEMINI_API_KEY||process.env.GOOGLE_API_KEY)?.trim():!!process.env[p.toUpperCase()+'_API_KEY']);
 async function agent(system:string,input:unknown,deadline:number){
+ let last='No se pudo completar la generación con los proveedores disponibles. Intenta nuevamente.';
+ const maxTokens=system.includes('agente de interpretación')?1200:system.includes('agente de control independiente')?1400:6000;
  for(const p of configured()){
   if(Date.now()>deadline-17000)break;
-  try{const out=await callProvider(p,[{role:'system',content:system},{role:'user',content:JSON.stringify(input)}]);return {...out,data:jsonFromText(out.text)};}catch{/* Try the next configured server provider. */}
+  try{const out=await callProvider(p,[{role:'system',content:system},{role:'user',content:JSON.stringify(input)}],maxTokens);return {...out,data:jsonFromText(out.text)};}catch(e){
+   const status=e instanceof Error?e.message.match(/(?:Gemini|Groq|OpenRouter|Cerebras) (\d{3})/)?.[1]:undefined;
+   console.warn('visual-agent-provider',{provider:p,status:status||'timeout-or-invalid-json'});
+   last=status==='429'?'El proveedor IA alcanzó su cuota. Revisa la cuota y facturación de tu API key o configura un proveedor de respaldo.':status==='401'||status==='403'?'La API key configurada no autoriza la generación. Revisa su validez y permisos.':status==='404'?'El modelo IA configurado no está disponible. Revisa la variable del modelo en Vercel.':status==='400'?'El proveedor rechazó la solicitud de generación (HTTP 400). Revisa la configuración del modelo.':e instanceof SyntaxError?'El proveedor devolvió JSON incompleto. Intenta nuevamente.':'El proveedor no respondió a tiempo. Intenta nuevamente o configura un proveedor de respaldo.';
+  }
  }
- throw new Error('No se pudo completar la generación con los proveedores disponibles. Intenta nuevamente.');
+ throw new Error(last);
 }
 function cleanBrief(raw:any,prompt:string):Brief{
  const b=inferBrief(prompt),p=prompt.toLowerCase();

@@ -15,7 +15,7 @@ export function cramerSections(prompt:string):ContentSection[]{
  const normalized=prompt.replace(/[−–]/g,'-').replace(/(\d),(\d)/g,'$1.$2');
  const matches=[...normalized.matchAll(/([+-]?(?:(?:\d+(?:\.\d+)?\s*\*?\s*)?[xyz](?:\s*[+-]\s*(?:\d+(?:\.\d+)?\s*\*?\s*)?[xyz])*))\s*=\s*([+-]?\d+(?:\.\d+)?)/gi)];
  if((normalized.match(/=/g)||[]).length!==matches.length)throw new Error('Escribe ecuaciones lineales completas, por ejemplo 2x+y=5; x-y=1.');
- for(const m of matches){const before=normalized.slice(0,m.index).trimEnd(),after=normalized.slice(m.index!+m[0].length);if(/[0-9xyz]\s*[+\-]$/.test(before)||/^[+\-]/.test(m[1])&&/[0-9xyz]$/.test(before)||/^\s*[+\-*/]\s*[0-9xyz]/i.test(after)||/^[0-9a-z.]/i.test(after))throw new Error('Usa coeficientes a la izquierda y un número a la derecha de cada ecuación.');}
+ for(const m of matches){const before=normalized.slice(0,m.index).trimEnd(),after=normalized.slice(m.index!+m[0].length);if(/[0-9xyz]\s*[+\-]$/.test(before)||/^[+\-]/.test(m[1])&&/[0-9xyz]$/.test(before)||/^\s*[+\-*/]\s*[0-9xyz]/i.test(after)||/^[0-9a-z]/i.test(after)||/^\.(?!\s|$)/.test(after))throw new Error('Usa coeficientes a la izquierda y un número a la derecha de cada ecuación.');}
  const size=/3\s*[x×]\s*3|tres inc[oó]gnitas/.test(normalized)||matches.some(m=>/z/i.test(m[1]))?3:2;
  if(matches.length&&matches.length!==size)throw new Error(`Incluye las ${size} ecuaciones completas del sistema.`);
  const variables=['x','y','z'].slice(0,size);
