@@ -14,5 +14,5 @@ export function applyBrief(doc:VisualDocument,b:Brief):VisualDocument{
  const design=structuredClone(DESIGN_PRESETS[b.preset]||DESIGN_PRESETS['educational-clean']);
  design.columns=b.documentType==='brochure'?3:b.format==='portrait'?(b.documentType==='poster'?2:1):b.brief?4:2;
  if(b.documentType==='activity')design.columns=1;
- return {...doc,version:2,documentType:b.documentType,audience:b.audience,format:b.format,theme:b.preset==='technical-blueprint'?'blueprint':'educational',design};
+ return {...doc,sections:b.documentType==='poster'?doc.sections.map((s,i)=>({...s,span:i===0||s.region==='footer'?2:1})):doc.sections,version:2,documentType:b.documentType,audience:b.audience,format:b.format,theme:b.preset==='technical-blueprint'?'blueprint':'educational',design};
 }
