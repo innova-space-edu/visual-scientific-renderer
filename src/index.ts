@@ -61,3 +61,5 @@ export * from "./volume/webgpu-volume.js";
 export * from "./render/pathtrace-image.js";
 export * from "./render/three-adapter.js";
 export * from "./render/still-pipeline.js";
+export * from "./render/lifecycle.js";
+export * from "./render/physical-studio.js";

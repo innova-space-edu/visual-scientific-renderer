@@ -22,3 +22,11 @@ npm install
 npm run check
 npm run dev
 ```
+
+## Quality preview / final images
+
+The review UI now includes a materials laboratory, orbit/pan/zoom controls, progressive GPU path tracing, local GLB import and actual-resolution PNG export up to 4K. Rendering uses geometry, conventional materials and mathematical sampling; no generative image service is involved.
+
+Read [the quality workflow and scientific limits](docs/RENDER_QUALITY.md) before interpreting the educational scenes as physical datasets. Blender/Cycles is a separate optional worker, not a Vercel runtime dependency.
+
+Dependencies are locked. Use `npm ci` and `npm run check`. Commit the complete validated change once to the existing PR, then create one final preview deployment.

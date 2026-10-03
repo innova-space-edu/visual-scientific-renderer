@@ -5,11 +5,12 @@ export function applyRendererPostFX(renderer:any,THREE:any,options:PostFXOptions
 }
 export async function createBloomPipeline(renderer:any,scene:any,camera:any,options:PostFXOptions={}){
   try{
-    const THREE:any=await import("three/webgpu"),TSL:any=await import("three/tsl");
-    const PostClass=THREE.PostProcessing??THREE.RenderPipeline;if(!PostClass||typeof TSL.pass!=="function"||typeof TSL.bloom!=="function")return null;
+    const THREE:any=await import("three/webgpu"),TSL:any=await import("three/tsl"),{bloom:createBloom}=await import("three/addons/tsl/display/BloomNode.js");
+    const PostClass=THREE.PostProcessing??THREE.RenderPipeline;if(!PostClass||typeof TSL.pass!=="function")return null;
     const pipeline=new PostClass(renderer),scenePass=TSL.pass(scene,camera),color=scenePass.getTextureNode?scenePass.getTextureNode("output"):scenePass;
-    const bloom=TSL.bloom(color,options.bloom??.8,options.bloomRadius??.35,options.bloomThreshold??.72);
-    pipeline.outputNode=color.add(bloom);return pipeline;
+    const bloom=createBloom(color,options.bloom??.8,options.bloomRadius??.35,options.bloomThreshold??.72);
+    pipeline.outputNode=color.add(bloom);
+    return {render:()=>pipeline.render(),setBloom:(value:number)=>{bloom.strength.value=value},dispose:()=>{bloom.dispose();scenePass.dispose();pipeline.dispose()}};
   }catch{return null}
 }
 export function makeGlowShell(THREE:any,radius:number,color:number,intensity=.7){
