@@ -2,3 +2,20 @@
 
 .panel input[type=checkbox]{width:18px;height:18px}
 textarea{font:inherit;color:inherit;background:#101928;border:1px solid #31445b;border-radius:7px;padding:10px;resize:vertical;width:100%}textarea:focus-visible{outline:2px solid #89d3ff}.mode-nav{display:flex;gap:10px;padding:16px 30px;border-bottom:1px solid #263042}.mode-nav button,.studio-layout button{background:#152236;color:#cdddeb;border:1px solid #34475f;border-radius:7px;padding:10px 13px;font-size:12px}.mode-nav button.active{background:#a6d7ee;color:#102534}.studio-layout{display:grid;grid-template-columns:370px minmax(0,1fr)}.studio-controls{padding:24px;border-right:1px solid #263042;max-height:calc(100vh - 200px);overflow:auto;background:#0c111c}.studio-controls h2{font-size:20px;margin:12px 0}.studio-controls label{display:block;font-size:12px;color:#9fb7cc;margin:14px 0 6px}.studio-controls input:not([type=file]),.studio-controls select{width:100%;padding:10px;border-radius:6px;color:#e0eaf5;background:#101928;border:1px solid #31445b;font:inherit;font-size:12px}.studio-controls select{margin-bottom:10px}.studio-controls .eyebrow{display:block;margin-top:22px}.action-row{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.studio-layout button.primary{background:#a6d7ee;color:#102534;width:100%;margin-top:12px}.content-section{padding:12px;background:#101928;border:1px solid #26394b;border-radius:8px;margin:12px 0}.content-section label{margin-top:8px}.content-section button{margin-top:8px}.design-workspace{padding:24px;min-width:0;background:#141d2b}.design-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;font-size:13px;color:#a9bed0}#design-status{font-size:12px;color:#b9dccb;margin-bottom:15px}#design-preview{overflow:auto;max-height:calc(100vh - 280px);min-height:480px;background:#253145;padding:20px;border-radius:10px}#design-preview>svg{display:block;width:100%;height:auto;max-width:1800px;box-shadow:0 20px 50px #0005}.empty-design{display:grid;place-content:center;text-align:center;min-height:500px;line-height:2;color:#9eafc2}#approval-state{font-size:12px;color:#e6c594}.studio-controls pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;max-height:240px;overflow:auto}.studio-controls details{margin-top:20px}.panel textarea{font-size:12px}.panel label[for=geometry-prompt]{display:block}#python-code{font-family:monospace;font-size:12px}#print-surface{display:none}@media(max-width:1000px){.studio-layout{grid-template-columns:320px minmax(0,1fr)}}@media(max-width:700px){.studio-layout{display:flex;flex-direction:column}.studio-controls{max-height:none;border-right:0;overflow:visible}.design-workspace{padding:15px}#design-preview{max-height:none;min-height:240px;padding:8px}.empty-design{min-height:240px}.mode-nav{padding:12px 20px}.design-toolbar{flex-wrap:wrap}.studio-controls input[type=file]{max-width:100%}}@media print{body{background:white}.app{display:none!important}#print-surface{display:block}#print-surface svg{width:100%;height:auto;max-height:98vh} @page{margin:8mm;size:landscape}}
+
+/* AI editorial workflow */
+.ai-action{box-shadow:0 0 0 1px #67d3ff22,0 12px 28px #06132255}
+.checkline{display:flex!important;align-items:center;gap:9px}
+.checkline input{width:16px!important}
+.mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mini-grid label{margin-top:8px}
+.palette-editor{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 16px}
+.palette-editor label{font-size:10px!important;text-align:center}
+.palette-editor input[type=color]{width:100%!important;height:36px;padding:2px!important}
+.section-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.section-actions button:first-child{border-color:#446b8a;background:#132b40;color:#cfeaff}
+.content-section select{margin-bottom:5px}
+.content-section{box-shadow:inset 3px 0 0 #4d789b55}
+#ai-meta{padding:10px 12px;border:1px solid #263f56;border-radius:8px;background:#0c1725;color:#9fc9dc}
+.studio-controls h2{font-size:21px}
+@media(max-width:700px){.mini-grid{grid-template-columns:1fr}.palette-editor{grid-template-columns:1fr 1fr}}
