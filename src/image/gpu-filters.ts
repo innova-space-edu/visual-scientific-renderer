@@ -1,0 +1,9 @@
+export type GPUFilterKind="gaussian"|"sobel"|"sharpen"|"contrast";
+export function gpuFilterWGSL(kind:GPUFilterKind){
+  const gaussian="var c=sampleAt(base,0,0)*.227027;c+=sampleAt(base,-1,0)*.1945946;c+=sampleAt(base,1,0)*.1945946;c+=sampleAt(base,0,-1)*.1216216;c+=sampleAt(base,0,1)*.1216216;c+=sampleAt(base,-2,0)*.0702703;c+=sampleAt(base,2,0)*.0702703;outColor=c;";
+  const sobel="let gx=-sampleAt(base,-1,-1)-2.0*sampleAt(base,-1,0)-sampleAt(base,-1,1)+sampleAt(base,1,-1)+2.0*sampleAt(base,1,0)+sampleAt(base,1,1);let gy=-sampleAt(base,-1,-1)-2.0*sampleAt(base,0,-1)-sampleAt(base,1,-1)+sampleAt(base,-1,1)+2.0*sampleAt(base,0,1)+sampleAt(base,1,1);let e=length(vec2f(dot(gx.rgb,vec3f(.333)),dot(gy.rgb,vec3f(.333))));outColor=vec4f(vec3f(e),1.0);";
+  const sharpen="outColor=sampleAt(base,0,0)*5.0-sampleAt(base,-1,0)-sampleAt(base,1,0)-sampleAt(base,0,-1)-sampleAt(base,0,1);";
+  const contrast="let c=sampleAt(base,0,0);outColor=vec4f((c.rgb-.5)*1.12+.5,c.a);";
+  const body=kind==="sobel"?sobel:kind==="sharpen"?sharpen:kind==="contrast"?contrast:gaussian;
+  return "@group(0)@binding(0)var inputTex:texture_2d<f32>;@group(0)@binding(1)var outputTex:texture_storage_2d<rgba8unorm,write>;fn sampleAt(base:vec2i,dx:i32,dy:i32)->vec4f{let size=textureDimensions(inputTex);let p=clamp(base+vec2i(dx,dy),vec2i(0),vec2i(size)-vec2i(1));return textureLoad(inputTex,p,0);}@compute @workgroup_size(8,8) fn main(@builtin(global_invocation_id) gid:vec3u){let size=textureDimensions(inputTex);if(gid.x>=size.x||gid.y>=size.y){return;}let base=vec2i(gid.xy);var outColor:vec4f;"+body+"textureStore(outputTex,base,clamp(outColor,vec4f(0.0),vec4f(1.0)));}";
+}

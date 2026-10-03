@@ -1,0 +1,5 @@
+import type {V3} from "./forces.js";
+export function pointChargeField(point:V3,chargePosition:V3,charge:number,k=8.9875517923e9):V3{const dx=point[0]-chargePosition[0],dy=point[1]-chargePosition[1],dz=point[2]-chargePosition[2],r=Math.max(1e-9,Math.hypot(dx,dy,dz)),f=k*charge/(r*r*r);return[dx*f,dy*f,dz*f]}
+export function electricField(point:V3,charges:Array<{position:V3;charge:number}>):V3{let ex=0,ey=0,ez=0;for(const c of charges){const e=pointChargeField(point,c.position,c.charge);ex+=e[0];ey+=e[1];ez+=e[2]}return[ex,ey,ez]}
+export function magneticDipoleField(point:V3,moment:V3=[0,0,1],origin:V3=[0,0,0],mu0Over4Pi=1e-7):V3{const rx=point[0]-origin[0],ry=point[1]-origin[1],rz=point[2]-origin[2],r=Math.max(1e-9,Math.hypot(rx,ry,rz)),hx=rx/r,hy=ry/r,hz=rz/r,mdotr=moment[0]*hx+moment[1]*hy+moment[2]*hz,f=mu0Over4Pi/(r*r*r);return[f*(3*hx*mdotr-moment[0]),f*(3*hy*mdotr-moment[1]),f*(3*hz*mdotr-moment[2])]}
+export function seedFieldLines(count=24,radius=1):Array<V3>{const out:V3[]=[];for(let i=0;i<count;i++){const a=2*Math.PI*i/count;out.push([Math.cos(a)*radius,Math.sin(a)*radius,.08])}return out}

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+site-dist/
+public/vendor/
+.vercel/
+.env*
+artifacts/
+
+.test-dist/

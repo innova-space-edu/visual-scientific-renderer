@@ -1,0 +1,11 @@
+export type KernelRecord={name:string;bytes:ArrayBuffer;updatedAt:number;source?:string;sha256?:string};
+export class MemoryKernelStore{private data=new Map<string,KernelRecord>();async put(record:KernelRecord){this.data.set(record.name,record)}async get(name:string){return this.data.get(name)}async list(){return[...this.data.values()].map(({bytes,...meta})=>({...meta,size:bytes.byteLength}))}async remove(name:string){return this.data.delete(name)}}
+export class IndexedDBKernelStore{
+  constructor(private dbName="visual-scientific-spice",private storeName="kernels"){}
+  private open(){return new Promise<IDBDatabase>((resolve,reject)=>{const req=indexedDB.open(this.dbName,1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains(this.storeName))req.result.createObjectStore(this.storeName,{keyPath:"name"})};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+  async put(record:KernelRecord){const db=await this.open();await new Promise<void>((resolve,reject)=>{const tx=db.transaction(this.storeName,"readwrite");tx.objectStore(this.storeName).put(record);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)});db.close()}
+  async get(name:string){const db=await this.open();const value=await new Promise<KernelRecord|undefined>((resolve,reject)=>{const req=db.transaction(this.storeName).objectStore(this.storeName).get(name);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});db.close();return value}
+  async list(){const db=await this.open();const values=await new Promise<KernelRecord[]>((resolve,reject)=>{const req=db.transaction(this.storeName).objectStore(this.storeName).getAll();req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});db.close();return values.map(({bytes,...meta})=>({...meta,size:bytes.byteLength}))}
+  async remove(name:string){const db=await this.open();await new Promise<void>((resolve,reject)=>{const tx=db.transaction(this.storeName,"readwrite");tx.objectStore(this.storeName).delete(name);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)});db.close();return true}
+}
+export async function sha256Hex(bytes:ArrayBuffer){const digest=await crypto.subtle.digest("SHA-256",bytes);return[...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,"0")).join("")}

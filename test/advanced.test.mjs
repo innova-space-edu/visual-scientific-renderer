@@ -1,0 +1,10 @@
+import test from"node:test";import assert from"node:assert/strict";import{FloatTensor,gaussianKernel,convolve2D,fft1D,ifft1D,traceStreamline,extractIsoSurfacePoints,chooseRuntimeBudget,gravitationalAcceleration,lorentzAcceleration,buildBVH,intersectBVH,encodeRadianceHDR,ScientificPluginRegistry}from"../dist/index.js";
+test("tensor convolution preserves shape",()=>{const t=new FloatTensor([4,4]);t.set(1,1,1);const out=convolve2D(t,gaussianKernel(1,1));assert.deepEqual(out.shape,[4,4]);assert.ok(out.get(1,1)>0)});
+test("fft round trip",()=>{const input=[1,2,3,4].map(re=>({re,im:0}));const rt=ifft1D(fft1D(input));assert.ok(Math.abs(rt[2].re-3)<1e-9)});
+test("streamline follows uniform field",()=>{const s=traceStreamline([0,0,0],()=>[1,0,0],{step:.1,maxSteps:5});assert.equal(s.length,6);assert.ok(s.at(-1)[0]>.49)});
+test("isosurface extracts crossings",()=>{const values=new Float32Array([0,1,0,1,0,1,0,1]);const p=extractIsoSurfacePoints({nx:2,ny:2,nz:2,values},.5);assert.ok(p.length>=3)});
+test("runtime budget degrades without WebGPU",()=>assert.equal(chooseRuntimeBudget({webgpu:false}).quality,"draft"));
+test("physics forces are finite",()=>{assert.ok(Number.isFinite(gravitationalAcceleration([1,0,0],[0,0,0],1e10)[0]));assert.deepEqual(lorentzAcceleration([1,0,0],[0,0,0],[0,0,1],1,1),[0,-1,0])});
+test("BVH intersects triangle",()=>{const b=buildBVH([{a:[-1,-1,0],b:[1,-1,0],c:[0,1,0]}]);const h=intersectBVH({origin:[0,0,1],direction:[0,0,-1]},b);assert.ok(h&&Math.abs(h.t-1)<1e-9)});
+test("HDR encoder emits radiance header",()=>{const b=encodeRadianceHDR(1,1,new Float32Array([1,1,1]));assert.equal(new TextDecoder().decode(b.slice(0,10)),"#?RADIANCE")});
+test("plugin registry resolves domain",()=>{const r=new ScientificPluginRegistry().register({id:"p",version:"1",domains:["physics"]});assert.equal(r.list("physics").length,1)});
