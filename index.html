@@ -28,10 +28,10 @@
 <label for="png-scale">Tamaño de exportación</label><select id="png-scale"><option value="1">Original</option><option value="2">2× · detalle alto</option></select>
 <div class="action-row"><button id="save-png">PNG</button><button id="save-jpg">JPG</button><button id="save-svg">SVG</button><button id="print-doc">PDF / imprimir</button></div>
 <div class="action-row"><button id="save-project">Guardar proyecto JSON</button><button id="load-project">Abrir proyecto</button></div><input id="project-file" type="file" accept=".json" hidden/>
-<details><summary>Python local · datos y cálculos</summary><p class="note">Worker aislado. Ejecuta Python y devuelve datos; no utiliza modelos de imágenes.</p><textarea id="python-code" rows="5">import json, math
+<details><summary>Python local · datos y cálculos</summary><p class="note">Worker aislado. Ejecuta Python y devuelve datos; no utiliza modelos de imágenes.</p><label for="python-code">Código Python</label><textarea id="python-code" rows="5">import json, math
 json.dumps([{"x": x/10, "y": math.sin(x/10)} for x in range(20)])</textarea><button id="run-python">Ejecutar Python</button><button id="plot-python">Usar datos Python en gráfico</button><button id="cancel-python" hidden>Cancelar cálculo</button><pre id="python-output"></pre></details>
 </aside>
-<section class="design-workspace"><div class="design-toolbar"><span>Vista del material</span><button id="use-3d">Usar captura 3D en el diseño</button></div><div id="design-status" role="status" aria-live="polite">Revisa el contenido y apruébalo para generar.</div><div id="design-preview" aria-label="Vista previa del material"><div class="empty-design">Tu contenido se convierte en una composición editable.<br/>Revisa los textos a la izquierda y pulsa Aprobar contenido.</div></div><p class="note">Las páginas crecen para mantener todo el texto legible. La salida PDF utiliza la impresión del navegador.</p></section>
+<section class="design-workspace"><div class="design-toolbar"><span>Vista del material</span><button id="use-3d">Abrir 3D para capturar</button></div><div id="design-status" role="status" aria-live="polite">Revisa el contenido y apruébalo para generar.</div><div id="design-preview" aria-label="Vista previa del material"><div class="empty-design">Tu contenido se convierte en una composición editable.<br/>Revisa los textos a la izquierda y pulsa Aprobar contenido.</div></div><p class="note">Las páginas crecen para mantener todo el texto legible. La salida PDF utiliza la impresión del navegador.</p></section>
 </section>
 <section class="layout" id="studio-3d" hidden>
 <aside class="panel" aria-label="Controles de escena">
@@ -59,7 +59,7 @@ json.dumps([{"x": x/10, "y": math.sin(x/10)} for x in range(20)])</textarea><but
 <div class="grid"><div><span>Vista interactiva</span><strong id="backend">—</strong></div><div><span>FPS</span><strong id="fps">—</strong></div><div><span>Partículas</span><strong id="particle-count">—</strong></div><div><span>Muestras/píxel</span><strong id="sample-count">—</strong></div></div>
 </aside>
 <section class="workspace">
-<div class="viewport" id="viewport"><canvas id="view" aria-label="Escena científica interactiva"></canvas><div class="viewport-tools"><button id="pause" disabled>Pausar</button><button id="reset-camera">Restablecer cámara</button><button id="cancel" hidden>Salir del render físico</button></div><div class="camera-hint">Arrastra para orbitar · rueda para acercar · clic derecho para desplazar</div></div>
+<div class="viewport" id="viewport"><canvas id="view" aria-label="Escena científica interactiva"></canvas><div class="viewport-tools"><button id="pause" disabled>Pausar</button><button id="reset-camera">Restablecer cámara</button><button id="capture-3d">Usar escena en diseño</button><button id="cancel" hidden>Salir del render físico</button></div><div class="camera-hint">Arrastra para orbitar · rueda para acercar · clic derecho para desplazar</div></div>
 <div class="render-status"><div id="status" role="status" aria-live="polite">Inicializando motor…</div><progress id="progress" max="1" value="0" aria-label="Progreso del render" hidden></progress><p id="scene-note">Preparando materiales físicos…</p></div>
 </section>
 </section></main><script type="module" src="/src/main.ts"></script>

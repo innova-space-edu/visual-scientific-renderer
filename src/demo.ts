@@ -50,7 +50,7 @@ async function init(){
   animate();
 }
 function resize(){
-  if(!handle||exporting)return;
+  if(!handle||exporting||!modeActive)return;
   const w=Math.max(1,canvas.clientWidth),h=Math.max(1,canvas.clientHeight);
   handle.renderer.setSize(w,h,false);
   if(!trace&&!traceBuilding){camera.aspect=w/h;camera.updateProjectionMatrix()}
@@ -195,5 +195,6 @@ $("#create-geometry").addEventListener('click',async()=>{
  let next:any;
  try{const specs=geometryFromPrompt($<HTMLTextAreaElement>('#geometry-prompt').value);next=buildPromptScene(specs);stopTrace();loading=true;updateButtons();const nextPipeline=await createBloomPipeline(handle.renderer,next.scene,camera,{bloom:+bloom.value,bloomThreshold:1.2});pipeline?.dispose?.();disposeScientificScene(current?.scene);current=next;pipeline=nextPipeline;currentScene='custom';elapsed=0;setCamera([next.extent*.6,next.extent*.4,next.extent],[0,0,0]);controls.maxDistance=Math.max(40,next.extent*4);controls.saveState();sceneNotes.custom='Geometría calculada desde una gramática local. Péndulo: aproximación de ángulo pequeño; onda: modelo analítico. Las descripciones desconocidas requieren un modelo o una fórmula.';$('#scene-note').textContent=sceneNotes.custom;document.querySelectorAll('[data-scene]').forEach(b=>b.classList.remove('active'));message('Escena creada · '+specs.map(s=>s.kind).join(' + '));}catch(error){if(next&&next!==current)disposeScientificScene(next.scene);message('Revisa la descripción: '+String(error))}finally{loading=false;updateButtons();resize()}
 });
+$('#capture-3d').addEventListener('click',()=>document.dispatchEvent(new CustomEvent('capture-for-design')));
 document.addEventListener('capture-for-design',()=>{if(!handle||!current){message('Abre primero una escena 3D');return}try{if(!trace)renderLive();const source=traceCanvas??canvas;const copy=document.createElement('canvas');copy.width=source.width;copy.height=source.height;copy.getContext('2d')!.drawImage(source,0,0);document.dispatchEvent(new CustomEvent('captured-3d',{detail:copy.toDataURL('image/png')}));}catch(error){message('No se pudo capturar: '+String(error))}});
 init().catch(error=>{message('Este navegador no pudo iniciar WebGPU/WebGL. El Estudio 2D sigue disponible. '+String(error));console.error(error)});

@@ -5,8 +5,8 @@ export default async function handler(req:any,res:any){
  try{
  const endpoint='https://es.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch='+encodeURIComponent(topic)+'&gsrlimit=3&prop=extracts|info&exintro=1&explaintext=1&inprop=url&format=json';
  const response=await fetch(endpoint,{headers:{'User-Agent':'InnovaVisualStudio/1.0 (educational content research)'},signal:AbortSignal.timeout(12000)});
- if(!response.ok)throw new Error('La fuente no respondió');const data=await response.json();const pages=Object.values(data.query?.pages??{}) as any[];if(!pages.length){res.status(404).json({error:'No se encontraron fuentes. Puedes pegar tu contenido.'});return}
- const sections=pages.map(p=>({title:p.title,text:String(p.extract??'').slice(0,1200)}));const sources=pages.map(p=>({title:p.title,url:p.fullurl}));
+ if(!response.ok)throw new Error('La fuente no respondió');const data=await response.json();const pages=(Object.values(data.query?.pages??{}) as any[]).sort((a,b)=>(a.index??0)-(b.index??0));if(!pages.length){res.status(404).json({error:'No se encontraron fuentes. Puedes pegar tu contenido.'});return}
+ const sections=pages.map(p=>{let text=String(p.extract??'').slice(0,1200);if(String(p.extract??'').length>1200){const end=Math.max(text.lastIndexOf('.'),text.lastIndexOf('!'),text.lastIndexOf('?'));if(end>200)text=text.slice(0,end+1);}return{title:p.title,text}});const sources=pages.map(p=>({title:p.title,url:p.fullurl}));
  // A text assistant is optional. The approved source excerpts remain visible to the user.
  let result={title:topic,subtitle:'Investigación de fuentes públicas · Revisa antes de aprobar',sections,sources};
  if(process.env.CONTENT_API_KEY&&process.env.CONTENT_API_URL&&process.env.CONTENT_MODEL){
