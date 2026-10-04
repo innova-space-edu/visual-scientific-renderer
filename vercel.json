@@ -6,7 +6,13 @@
     "deploymentEnabled": {
       "feat/scientific-renderer-v1": false,
       "main": true,
-      "feat/prompt-only-studio": false
+      "feat/prompt-only-studio": false,
+      "fix/general-generation-quality": false
+    }
+  },
+  "functions": {
+    "api/content-plan.ts": {
+      "maxDuration": 180
     }
   }
 }
