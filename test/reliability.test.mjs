@@ -75,3 +75,22 @@ test('all exhausted providers retain quota and credit reasons without bypassing 
  let status,payload;await handler({method:'POST',body:{prompt:'Infografía breve de fotosíntesis'}},{setHeader(){},status(n){status=n;return this},json(v){payload=v}});
  assert.equal(status,503);assert.equal(payload.stage,'validation');assert.ok(!payload.document);assert.match(payload.error,/cuota agotada/);assert.match(payload.error,/sin saldo/);assert.ok(payload.providers.some(f=>f.retryAfterSeconds===45));assert.ok(!JSON.stringify(payload).includes('secret-'));
 }));
+
+test('Gemini schema rejection retries plain JSON within one timeout and still needs an independent critic',()=>isolated(async()=>{
+ process.env.GEMINI_API_KEY='secret-gemini';let editorial=0,critics=0;const signals=[];
+ globalThis.fetch=async(url,opts)=>{
+  const b=JSON.parse(opts.body);
+  if(b.tools)return{ok:true,json:async()=>({candidates:[{content:{parts:[{text:'Las plantas producen azúcares con luz.'}]},groundingMetadata:{groundingChunks:[{web:{title:'Botánica',uri:'https://example.org/botanica'}}]}}]})};
+  const input=JSON.parse(b.contents[0].parts[0].text);let data;
+  if(!input.brief)data={topic:'Fotosíntesis',domain:'science'};
+  else if(input.document){critics++;data={accepted:true,issues:[]};}
+  else{editorial++;signals.push(opts.signal);assert.equal(b.generationConfig.responseMimeType,'application/json');assert.match(input.prompt,/fotosíntesis/);
+   if(editorial===1){assert.ok(b.generationConfig.responseJsonSchema);return{ok:false,status:400};}
+   assert.equal(b.generationConfig.responseJsonSchema,undefined);assert.equal(b.generationConfig.thinkingConfig,undefined);
+   data={title:'Fotosíntesis',diagram:'photosynthesis',sections:[{title:'Luz',text:'Las plantas sintetizan azúcares con luz.',kind:'text'}]};
+  }
+  return{ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify(data)}]}}]})};
+ };
+ let status,payload;await handler({method:'POST',body:{prompt:'Infografía de fotosíntesis para 1 medio'}},{setHeader(){},status(n){status=n;return this},json(v){payload=v}});
+ assert.equal(status,200);assert.equal(editorial,2);assert.equal(critics,1);assert.equal(signals[0],signals[1]);assert.equal(payload.document.aiMeta.provider,'Gemini');
+}));

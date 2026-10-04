@@ -69,7 +69,18 @@ async function callProvider(provider:string,messages:any[],maxTokens=5000,timeou
  if(provider==='gemini'){
   const key=(process.env.GEMINI_API_KEY||process.env.GOOGLE_API_KEY)?.trim();if(!key)throw new Error('Gemini no configurado');
   const model=override||geminiModel(stage),system=messages.find(m=>m.role==='system')?.content||'',contents=messages.filter(m=>m.role!=='system').map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}));
-  const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents,generationConfig:{temperature:.25,maxOutputTokens:maxTokens,responseMimeType:'application/json',...(schema?{responseJsonSchema:schema}:{}),...geminiThinking(model)}}),signal:AbortSignal.timeout(timeoutMs)});
+  const url='https://generativelanguage.googleapis.com/v1beta/models/'+model+':generateContent';
+  const generationConfig:any={temperature:.25,maxOutputTokens:maxTokens,responseMimeType:'application/json',...(schema?{responseJsonSchema:schema}:{}),...geminiThinking(model)};
+  const signal=AbortSignal.timeout(timeoutMs),request=()=>fetch(url,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents,generationConfig}),signal});
+  let r=await request();
+  // Some model revisions reject the nested editorial schema or optional thinking
+  // controls. Keep JSON mode, the full prompt and downstream semantic validation.
+  // Both calls share the same timeout; quota/key errors are never retried here.
+  if(r.status===400&&(generationConfig.responseJsonSchema||generationConfig.thinkingConfig)){
+   console.warn('visual-gemini-json-compatibility',{stage,model});
+   delete generationConfig.responseJsonSchema;delete generationConfig.thinkingConfig;
+   r=await request();
+  }
   if(!r.ok)throw httpFailure(r.status,r.headers?.get('retry-after'));const d=await r.json();return{text:geminiText(d),provider:'Gemini',model};
  }
  if(provider==='groq'){
@@ -190,7 +201,7 @@ export async function generate(prompt:string){
    // The requested central water-cycle illustration has a precise built-in renderer.
    if(/ciclo (?:del )?agua/i.test(b.topic)&&/ilustra|diagrama|central/i.test(prompt))doc.diagram='water-cycle';
    checkPlan(doc,b);
-   const critic=await agent('Eres el agente de control independiente. '+instructions(['visual-quality-control',...(b.domain==='physics'?['physics-validator']:[])])+'\nAudita el plan contra el prompt, el brief y las fuentes. Verifica tema, nivel, requisitos explícitos, ejemplos, números, fórmulas, coherencia de los diagramas y texto sin placeholders. No aceptes cálculos físicos sin evidencia ni otro tema aunque se vea bonito. Devuelve SOLO JSON {accepted:boolean,issues:string[]}. Sé estricto con omisiones y temas ajenos; no rechaces por preferencias de decoración.',{prompt,brief:b,document:doc,artwork:assets.find(a=>a.id===author.data.artworkId),research:{query:b.topic,context:data.context.slice(0,6000),sources:data.sources,provider:searchProvider}},deadline,'validation',session);
+   const critic=await agent('Eres el agente de control independiente. '+instructions(['visual-quality-control',...(b.domain==='physics'?['physics-validator']:[])])+'\nAudita el plan contra el prompt, el brief y las fuentes. Verifica tema, nivel, requisitos explícitos, ejemplos, números, fórmulas, coherencia de los diagramas y texto sin placeholders. No aceptes cálculos físicos sin evidencia ni otro tema aunque se vea bonito. Devuelve SOLO JSON {accepted:boolean,issues:string[]}. Comprueba cada fecha, cifra, nombre y actor atribuido contra la evidencia investigada; no aceptes una atribución institucional o una cifra solo porque resulte plausible. Si la evidencia no respalda un detalle factual, solicita quitarlo o corregirlo. Sé estricto con omisiones y temas ajenos; no rechaces por preferencias de decoración.',{prompt,brief:b,document:doc,artwork:assets.find(a=>a.id===author.data.artworkId),research:{query:b.topic,context:data.context.slice(0,6000),sources:data.sources,provider:searchProvider}},deadline,'validation',session);
    if(critic.data.accepted!==true)throw new Error(clean((critic.data.issues||[]).join('; '),700)||'El contenido no cumple la solicitud');
    failure='';break;
   }catch(e){if(e instanceof PipelineFailure)throw e;failure=e instanceof Error?e.message:'El contenido necesita corrección';}
