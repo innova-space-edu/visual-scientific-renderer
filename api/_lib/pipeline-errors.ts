@@ -1,6 +1,8 @@
+import type {AttemptFailure} from './provider-policy.js';
 export type Stage='intent'|'research'|'editorial'|'validation';
-export type FailureCode='TIMEOUT'|'NETWORK'|'PROVIDER_UNAVAILABLE'|'INVALID_JSON'|'EMPTY_RESPONSE'|'TRUNCATED_RESPONSE'|'BLOCKED_RESPONSE'|'INVALID_KEY'|'QUOTA'|'CREDITS'|'MODEL_UNAVAILABLE'|'MODEL_CONFIG'|'DEADLINE';
+export type FailureCode='TIMEOUT'|'NETWORK'|'PROVIDER_UNAVAILABLE'|'INVALID_JSON'|'EMPTY_RESPONSE'|'TRUNCATED_RESPONSE'|'BLOCKED_RESPONSE'|'INVALID_KEY'|'QUOTA'|'CREDITS'|'MODEL_UNAVAILABLE'|'MODEL_CONFIG'|'DEADLINE'|'INPUT_BUDGET';
 const messages:Record<FailureCode,string>={
+ INPUT_BUDGET:'El contenido excede el presupuesto de tokens de este proveedor. Configura un respaldo con mayor capacidad.',
  TIMEOUT:'La IA tardó demasiado en responder. Intenta nuevamente.',
  NETWORK:'No se pudo conectar con el proveedor de IA. Intenta nuevamente.',
  PROVIDER_UNAVAILABLE:'El proveedor de IA está temporalmente indisponible. Intenta nuevamente.',
@@ -16,14 +18,19 @@ const messages:Record<FailureCode,string>={
  DEADLINE:'La generación excedió el tiempo disponible. Intenta nuevamente.'
 };
 export class ProviderFailure extends Error{
- constructor(public code:FailureCode,public retryable:boolean,public status?:number){super(messages[code]);}
+ constructor(public code:FailureCode,public retryable:boolean,public status?:number,public retryAfterSeconds?:number){super(messages[code]);}
 }
 export class PipelineFailure extends ProviderFailure{
- constructor(cause:ProviderFailure,public stage:Stage,public provider?:string){super(cause.code,cause.retryable,cause.status);}
+ constructor(cause:ProviderFailure,public stage:Stage,public provider?:string,public failures:AttemptFailure[]=[]){
+  super(cause.code,cause.retryable,cause.status,cause.retryAfterSeconds);
+  const reasons=[...new Set(failures.map(f=>f.provider+': '+(f.code==='QUOTA'?'cuota agotada':f.code==='CREDITS'?'sin saldo':f.code)))];
+  if(reasons.length)this.message='No se pudo completar la generación ('+reasons.join('; ')+'). '+cause.message;
+ }
 }
-export function httpFailure(status:number):ProviderFailure{
+export function httpFailure(status:number,retryAfter?:string|null):ProviderFailure{
  const code=status===402?'CREDITS':status===429?'QUOTA':status===401||status===403?'INVALID_KEY':status===404?'MODEL_UNAVAILABLE':status===400?'MODEL_CONFIG':status===408||status===504?'TIMEOUT':'PROVIDER_UNAVAILABLE';
- return new ProviderFailure(code,status>=500||status===408,status);
+ const seconds=retryAfter?Number(retryAfter):NaN;
+ return new ProviderFailure(code,status>=500||status===408,status,Number.isFinite(seconds)&&seconds>=0?Math.min(86400,Math.ceil(seconds)):undefined);
 }
 export function classifyFailure(error:unknown):ProviderFailure{
  if(error instanceof ProviderFailure)return error;

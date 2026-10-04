@@ -7,7 +7,8 @@
       "feat/scientific-renderer-v1": false,
       "main": true,
       "feat/prompt-only-studio": false,
-      "fix/general-generation-quality": false
+      "fix/general-generation-quality": false,
+      "fix/provider-quota-routing": false
     }
   },
   "functions": {
