@@ -13,12 +13,12 @@ $('generation-form').addEventListener('submit',async e=>{
  const current=++run,abort=new AbortController();controller=abort;rendered=null;doc=null;$('design-preview').replaceChildren();$('result').hidden=true;$('empty-state').hidden=true;$('generation-progress').hidden=false;$('cancel-generation').hidden=false;$<HTMLButtonElement>('generate').disabled=true;
  say('');stage(0,'Interpretando tu solicitud');
  // The server owns interpretation/research/design; avoid claiming a timed stage has completed.
- stage(1,'Preparando contenido y diseño');const timeout=setTimeout(()=>abort.abort('timeout'),120000);
+ stage(1,'Preparando contenido y diseño');const timeout=setTimeout(()=>abort.abort('timeout'),190000);
  try{
   const r=await fetch('/api/content-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt}),signal:abort.signal});
   const data=await r.json();if(!r.ok)throw new Error(data.error||'No se pudo crear la imagen.');if(current!==run)return;abort.signal.throwIfAborted();
   doc=validateDocument(data.document);stage(3,'Componiendo tu imagen');await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));abort.signal.throwIfAborted();
-  const {composeSVG}=await import('./composer.js');abort.signal.throwIfAborted();
+  const {composeSVG}=await import('./composer.js');const {preparePlanetArt}=await import('./planet-art.js');await preparePlanetArt([...(doc.diagram==='solar-system'?['sun','mercury','venus','earth','mars','jupiter','saturn','uranus','neptune']:[doc.diagram]),...doc.sections.map(s=>s.diagram||'')],abort.signal);abort.signal.throwIfAborted();
   rendered=composeSVG(doc);$('design-preview').innerHTML=rendered.svg;$('result-title').textContent=doc.title;$('result-meta').textContent=`${doc.audience||'Material visual'} · ${rendered.width} × ${rendered.height} px`;
   const sources=$('sources');sources.replaceChildren();if(doc.sources.length){const label=document.createElement('span');label.textContent='Fuentes:';sources.append(label);for(const source of doc.sources){const link=document.createElement('a');link.textContent=source.title;link.href=source.url;link.target='_blank';link.rel='noopener noreferrer';sources.append(link);}}
   sources.hidden=!doc.sources.length;$('result').hidden=false;say('Imagen creada. Ya puedes descargarla.');
@@ -30,7 +30,7 @@ const filename=()=>doc?.title.normalize('NFD').replace(/\p{Diacritic}/gu,'').rep
 async function bitmap(kind:'png'|'jpeg'){
  if(!rendered)return;const snapshot=rendered,name=filename(),button=$<HTMLButtonElement>(kind==='png'?'save-png':'save-jpg');button.disabled=true;
  const url=URL.createObjectURL(new Blob([snapshot.svg],{type:'image/svg+xml'}));
- try{const image=new Image();image.src=url;await image.decode();const canvas=document.createElement('canvas');canvas.width=snapshot.width;canvas.height=snapshot.height;if(canvas.width*canvas.height>32000000)throw new Error('Usa SVG o PDF para esta imagen extensa.');const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Canvas no está disponible.');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0);const blob=await new Promise<Blob>((ok,no)=>canvas.toBlob(b=>b?ok(b):no(new Error('No se pudo exportar la imagen.')),'image/'+kind,.95));download(blob,name+(kind==='png'?'.png':'.jpg'));say('Imagen descargada.');}catch(err){say(err instanceof Error?err.message:'No se pudo exportar.',true);}finally{URL.revokeObjectURL(url);button.disabled=false;}
+ try{const image=new Image();image.src=url;await image.decode();const canvas=document.createElement('canvas');const scale=Math.min(2,Math.sqrt(32000000/(snapshot.width*snapshot.height)));canvas.width=Math.round(snapshot.width*scale);canvas.height=Math.round(snapshot.height*scale);if(canvas.width*canvas.height>32000000)throw new Error('Usa SVG o PDF para esta imagen extensa.');const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Canvas no está disponible.');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height);const blob=await new Promise<Blob>((ok,no)=>canvas.toBlob(b=>b?ok(b):no(new Error('No se pudo exportar la imagen.')),'image/'+kind,.95));download(blob,name+(kind==='png'?'.png':'.jpg'));say('Imagen descargada.');}catch(err){say(err instanceof Error?err.message:'No se pudo exportar.',true);}finally{URL.revokeObjectURL(url);button.disabled=false;}
 }
 $('save-png').addEventListener('click',()=>bitmap('png'));$('save-jpg').addEventListener('click',()=>bitmap('jpeg'));
 $('save-svg').addEventListener('click',()=>{if(rendered)download(new Blob([rendered.svg],{type:'image/svg+xml'}),filename()+'.svg')});

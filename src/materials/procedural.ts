@@ -1,30 +1,12 @@
-import {fbm3,ridgedFbm3} from "../math/noise.js";
+import {surfaceSample} from "./surface.js";
 export type BodyMaterialKind="sun"|"rocky"|"gas-giant"|"ice-giant"|"rings"|"atmosphere";
 export type MaterialOptions={seed?:number;colorA?:string;colorB?:string;bands?:number;turbulence?:number;emissive?:number;opacity?:number;size?:number;storm?:boolean;stormColor?:string};
-function parseHex(hex:string){const n=parseInt(hex.replace("#",""),16);return[(n>>16)&255,(n>>8)&255,n&255]}
-function mix(a:number[],b:number[],t:number){return a.map((v,i)=>Math.round(v+(b[i]!-v)*Math.max(0,Math.min(1,t))))}
 export function createProceduralTexture(THREE:any,kind:BodyMaterialKind,options:MaterialOptions={}){
   if(typeof document==="undefined")throw new Error("Procedural CanvasTexture requires a browser canvas");
-  const size=options.size??512,seed=options.seed??1,canvas=document.createElement("canvas");canvas.width=size;canvas.height=size;
-  const ctx=canvas.getContext("2d")!,img=ctx.createImageData(size,size),a=parseHex(options.colorA??"#64748b"),b=parseHex(options.colorB??"#e2e8f0"),storm=parseHex(options.stormColor??"#a7321b");
+  const size=options.size??512,canvas=document.createElement("canvas");canvas.width=size;canvas.height=size;
+  const ctx=canvas.getContext("2d")!,img=ctx.createImageData(size,size);
   for(let y=0;y<size;y++)for(let x=0;x<size;x++){
-    const u=x/size,v=y/(size-1),latitude=(v-.5)*Math.PI,longitude=u*Math.PI*2,cp=Math.cos(latitude),nx=cp*Math.cos(longitude),ny=Math.sin(latitude),nz=cp*Math.sin(longitude);let t=.5;
-    if(kind==="gas-giant"||kind==="ice-giant"){const bands=options.bands??24,wave=Math.sin(v*Math.PI*bands+fbm3(nx*3,ny*9,nz*3,4,seed)*2.2);t=.5+.34*wave+.16*fbm3(nx*8,ny*5,nz*8,4,seed+20)}
-    else if(kind==="sun"){t=.5+.4*ridgedFbm3(nx*12,ny*12,nz*12,6,seed)+.15*fbm3(nx*35,ny*35,nz*35,3,seed+4)}
-    else if(kind==="rings"){
-      const radial=Math.hypot(u-.5,v-.5)*2;
-      const fine=.5+.5*Math.sin(radial*310+fbm3(u*18,v*18,0,3,seed)*3);
-      const broad=.5+.5*Math.sin(radial*54);
-      t=.18+.52*fine+.30*broad;
-      if(radial>.64&&radial<.69)t*=.08;
-      if(radial>.82&&radial<.845)t*=.28;
-    }
-    else t=.5+.4*fbm3(nx*9,ny*9,nz*9,6,seed);
-    let c=mix(a,b,t);
-    if(options.storm&&kind==="gas-giant"){
-      const du=(u-.72)/.12,dv=(v-.58)/.055,d=du*du+dv*dv;
-      if(d<1){const edge=Math.max(0,1-d),s=mix(c,storm,.55+.35*edge);c=s}
-    }
+    const u=x/size,v=y/(size-1),latitude=(v-.5)*Math.PI,longitude=u*Math.PI*2,cp=Math.cos(latitude),nx=cp*Math.cos(longitude),ny=Math.sin(latitude),nz=cp*Math.sin(longitude);const c=surfaceSample(kind,nx,ny,nz,u,v,options);
     const o=(y*size+x)*4;img.data[o]=c[0]!;img.data[o+1]=c[1]!;img.data[o+2]=c[2]!;img.data[o+3]=255;
   }
   ctx.putImageData(img,0,0);

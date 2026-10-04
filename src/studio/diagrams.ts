@@ -1,3 +1,5 @@
+import {ecosystemSVG,photosynthesisSVG} from './nature-art.js';
+import {planetArt} from './planet-art.js';
 import {waterCycleSVG} from './water-cycle.js';
 const planetColors:Record<string,string>={sun:'#f3b735',mercury:'#a99d96',venus:'#d6a963',earth:'#468dcc',mars:'#cc6c4b',jupiter:'#c79e7b',saturn:'#d9bd83',uranus:'#7ebfc4',neptune:'#4671c5'};
 export function planetSVG(kind:string,x:number,y:number,r:number):string{
@@ -6,6 +8,13 @@ export function planetSVG(kind:string,x:number,y:number,r:number):string{
  const id='planet-'+kind+'-'+Math.round(x)+'-'+Math.round(y),clip=id+'-clip';
  let out=`<defs><radialGradient id="${id}" cx=".3" cy=".25"><stop stop-color="#ffffff"/><stop offset=".25" stop-color="${color}"/><stop offset="1" stop-color="${dark}"/></radialGradient><clipPath id="${clip}"><circle cx="${x}" cy="${y}" r="${r}"/></clipPath></defs>`;
  if(kind==='sun')out+=`<circle cx="${x}" cy="${y}" r="${r*1.22}" fill="${color}" opacity=".13"/><circle cx="${x}" cy="${y}" r="${r*1.1}" fill="${color}" opacity=".22"/>`;
+ const texture=planetArt.get(kind);
+ if(texture){
+  if(kind==='saturn')out+=`<ellipse cx="${x}" cy="${y}" rx="${r*1.8}" ry="${r*.52}" fill="none" stroke="#c4ac83" stroke-width="${r*.25}" transform="rotate(-20 ${x} ${y})"/>`;
+  out+=`<image href="${texture}" x="${x-r}" y="${y-r}" width="${r*2}" height="${r*2}" data-material="shared-3d-${kind}"/>`;
+  if(kind==='saturn')out+=`<path d="M${x-r*1.7} ${y}a${r*1.7} ${r*.49} 0 0 0 ${r*3.4} 0" fill="none" stroke="#e0cba5" stroke-width="${r*.2}" transform="rotate(-20 ${x} ${y})"/>`;
+  return out;
+ }
  out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="url(#${id})"/>`;
  if(kind==='saturn')out+=`<ellipse cx="${x}" cy="${y}" rx="${r*1.65}" ry="${r*.38}" fill="none" stroke="#bda178" stroke-width="${r*.18}" transform="rotate(-20 ${x} ${y})"/>`;
  if(kind==='jupiter')for(let i=-2;i<=2;i++)out+=`<path d="M${x-r} ${y+i*r*.28}q${r} ${r*.2} ${r*2} 0" clip-path="url(#${clip})" fill="none" stroke="${i%2?'#e4cbb4':'#a87d5e'}" stroke-width="${r*.13}"/>`;
@@ -18,6 +27,8 @@ export function planetSVG(kind:string,x:number,y:number,r:number):string{
 const line=(x:number,y:number,a:number,b:number,color='#24538c',dash='')=>`<path d="M${x} ${y}L${a} ${b}" fill="none" stroke="${color}" stroke-width="3" ${dash?'stroke-dasharray="'+dash+'"':''}/>`;
 const label=(x:number,y:number,s:string,color='#183759')=>`<text x="${x}" y="${y}" fill="${color}" font-size="22" font-family="sans-serif">${s}</text>`;
 export function diagramSVG(kind:string):string{
+ if(kind==='ecosystem')return ecosystemSVG();
+ if(kind==='photosynthesis')return photosynthesisSVG();
  if(kind==='water-cycle')return waterCycleSVG();
  const defs='<defs><linearGradient id="solid" x2="1" y2="0"><stop stop-color="#8ce0fa"/><stop offset=".45" stop-color="#e2f8ff"/><stop offset="1" stop-color="#259acb"/></linearGradient><linearGradient id="gold"><stop stop-color="#fff0b2"/><stop offset="1" stop-color="#efaa42"/></linearGradient><radialGradient id="atom"><stop stop-color="#ffab9f"/><stop offset="1" stop-color="#c92454"/></radialGradient></defs>';
  let body='';
