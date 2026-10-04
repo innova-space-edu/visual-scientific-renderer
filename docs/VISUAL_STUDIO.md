@@ -47,3 +47,38 @@ The 2D planetary raster surfaces project a sphere with directional lighting and 
 For other subjects, the editor can select an image from relevant Wikipedia articles. Commons metadata must explicitly identify CC0 or public domain, and the chosen image must pass the content critic. Only fixed Wikimedia image hosts and bounded PNG/JPEG/WebP bytes are accepted, with credits preserved in exports. No model-authored image URL is fetched. A missing asset does not create an unrelated illustration. `GEMINI_IMAGE_MODEL` remains optional for custom raster artwork with the existing Gemini key; it does not control text or web search. Precise text, equations, labels and arrows always remain in the deterministic SVG compositor.
 
 PNG/JPG export now renders at up to twice the composition dimensions, with a 32-megapixel memory limit. SVG retains scalable typography and diagrams. Decorative cloud motion applies only to the browser preview and respects reduced-motion preferences; downloaded images are static.
+
+### Provider quotas and current defaults (October 2026)
+
+The server uses Gemini `gemini-3.8-flash` for editorial content and
+`gemini-3.5-flash-lite` for intent, research and independent validation.
+`GEMINI_TEXT_MODEL_PRIMARY` remains an explicit override. The 2.5 series is
+restricted to existing users according to Google's model catalog.
+Groq uses `openai/gpt-oss-120b` for editorial content and
+`openai/gpt-oss-20b` for intent and validation, with a conservative input/output
+budget under the documented free OSS tier's 8K tokens/minute ceiling.
+This budget is an estimate, not an account quota guarantee.
+
+OpenRouter defaults to `openrouter/free`, recording the actual returned model.
+An explicit `OPENROUTER_TEXT_MODEL` is respected; after a credit failure the
+free router is tried without repeating the paid model during that request.
+Free routing has its own rate and availability limits. No paid web tool is
+called by default: OpenRouter/Exa web research requires the explicit
+`OPENROUTER_SEARCH_MODEL` opt-in. Wikipedia is used after Gemini grounding
+fails, before consuming further inference quota. All research providers must
+supply transport-provided citations before their answer is treated as evidence.
+
+Quota, credit and invalid-configuration failures are remembered per model
+within one request. The API reports every attempted provider/model/stage code,
+plus bounded numeric `Retry-After` metadata when available, without logging
+keys, prompts or raw provider responses. Local intent parsing may continue
+through a quota failure; independently validated editorial content is still
+required. An unavailable critic never causes an unreviewed document to be
+returned as approved.
+
+No additional key is mandatory when Gemini, Groq and OpenRouter keys are
+already present in the production environment. Quota/balance and valid keys
+remain requirements of their respective accounts. Reference documentation:
+https://ai.google.dev/gemini-api/docs/models
+https://console.groq.com/docs/rate-limits
+https://openrouter.ai/docs/guides/routing/routers/free-router
